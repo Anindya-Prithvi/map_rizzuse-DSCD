@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+/// Something something
+message Something {
+    /// Something something
+    optional string something = 1;
+}
+
+/// Some service
+service SomeService {
+    /// Some method
+    rpc SomeMethod(Something) returns (Something);
+}
