@@ -7,3 +7,6 @@ If you're a developer, run `pip install -r requirements-dev.txt` to install the 
 
 # Testing
 To test the project, run `python -m unittest` in the root directory. This will run all the tests in the `tests` directory.
+
+# Structure of the Repository
+![diagram.yml](./diagram.svg)
