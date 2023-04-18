@@ -2,6 +2,8 @@
 
 
 from loguru import logger
+import math
+import os
 
 
 class Master:
@@ -17,6 +19,9 @@ class Master:
         logger.debug("Initializing complete.")
 
     def run(self):
+        logger.debug("Starting Input Split.")
+        self.input_split()
+        #TODO: Spawn processes for mappers
         logger.debug("Starting map phase.")
         self.map()
         logger.debug("Map phase complete. Starting partition phase.")
@@ -34,9 +39,12 @@ class Master:
         consists of multiple data files and each file is
         processed by a separate mapper.
         """
-        pass
+        input_files = os.listdir(self.input_data)
+        files_per_mapper = math.ceil(len(os.listdir(self.input_data)) / self.n_map)
+        self.partitions = [input_files[i:i+files_per_mapper] for i in range(0, len(input_files), files_per_mapper)]
 
-    def map(self):
+    # key -> document name, value -> document content  || figure out how to go about map function parameters
+    def map(self, key, value, input_files):
         """Map function to each input split to generate
         intermediate key-value pairs. The Map function takes a
         key-value pair as input and produces a set of
@@ -45,7 +53,27 @@ class Master:
         mapper's directory on the local file system. Note
         that each mapper will be run as a different process.
         """
-        pass
+        for input_file in input_files:
+            with open(os.path.join(self.input_data, input_file), 'r') as f:
+                # Read the input data file
+                input_data = f.read()
+                lines = input_data.split('\n')
+
+                words = []
+                for line in lines:
+                    line_words = line.split()
+                    words.extend(line_words)
+
+                intermediate_key_values = set()
+                #TODO: Check whether the frequency will be updated in here
+                for word in words:
+                    intermediate_key_values.add((word, '1'))
+
+                # Write the intermediate key-value pairs to a file in the mapper's directory
+                output_file = os.path.join(self.output_data, input_file)
+                with open(output_file, 'w') as f:
+                    for intermediate_key, intermediate_value in intermediate_key_values:
+                        f.write('{}\t{}\n'.format(intermediate_key, intermediate_value))
 
     def partition(self):
         """write a function that takes the list of key-value
