@@ -5,17 +5,17 @@ import argparse
 import math
 import multiprocessing
 import os
+import shutil
+from concurrent import futures
 from time import sleep
 
+import grpc
 from loguru import logger
 
-from map_worker import Mapper
-from reduce_worker import Reducer
 import messages_pb2
 import messages_pb2_grpc
-import grpc
-from concurrent import futures
-import shutil
+from map_worker import Mapper
+from reduce_worker import Reducer
 
 
 class Master:
@@ -57,15 +57,16 @@ class Master:
 
                         with grpc.insecure_channel(mapper["addr"]) as channel:
                             stub = messages_pb2_grpc.MapProcessInputStub(channel)
-                            response = stub.Receive(messages_pb2.InputMessage(key=str(key), value=line))
+                            response = stub.Receive(
+                                messages_pb2.InputMessage(key=str(key), value=line)
+                            )
                             assert response.value == "SUCCESS"
-        
+
         tpool = futures.ThreadPoolExecutor(max_workers=self.n_map)
         tpool.map(send_shard, self.mappers, self.partitions)
-        
+
         sleep(100000)
         tpool.shutdown()
-
 
     def initialize_nodes(self):
         """On a production scale we can ask a central(registry) server
@@ -170,7 +171,7 @@ if __name__ == "__main__":
         logger.warning("Keyboard Interrupt. Terminating nodes.")
     except Exception as e:
         logger.error(e)
-    
+
     master.destroy_nodes()
     shutil.rmtree("../reduce_intermediate")
     shutil.rmtree("../map_intermediate")

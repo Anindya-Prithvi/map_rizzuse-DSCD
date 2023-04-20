@@ -56,6 +56,8 @@ if [ $? -ne 0 ]; then
     echo "isort failed. Running formatter"
     isort .
 fi
+git add .
+echo "Formatted code"
 echo "Running ruff... This will not fail if there are errors"
 ruff .
 echo "Testing completed"
