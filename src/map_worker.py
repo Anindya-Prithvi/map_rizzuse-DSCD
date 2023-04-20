@@ -6,21 +6,12 @@ import grpc
 
 import messages_pb2
 import messages_pb2_grpc
+from loguru import logger
 
 
 class MapProcessInput(messages_pb2_grpc.MapProcessInputServicer):
-    def __init__(self):
-        super().__init__()
-
-    # def GetServerList(self, request, context):
-    #     self.logger.info(
-    #         "SERVER LIST REQUEST FROM %s",
-    #         context.peer(),
-    #     )
-    #     return self.registered
-
-    def receive(self, request, context):
-        print("received")
+    def Receive(self, request, context):
+        print("received", request.key, request.value)
         return messages_pb2.Success(value="SUCCESS")
 
 
@@ -41,7 +32,8 @@ class Mapper:
         )
         server.add_insecure_port(IP + ":" + port)  # no TLS moment
         server.start()
-        print(f"{self.intermediate_dir} started on {IP}:{port}")
+        logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
+        server.wait_for_termination()
 
     def map(self):
         with open(self.input_file, "r") as f:

@@ -6,20 +6,11 @@ import grpc
 
 import messages_pb2
 import messages_pb2_grpc
+from loguru import logger
 
 
 class ReduceProcessInput(messages_pb2_grpc.ReduceProcessInputServicer):
-    def __init__(self):
-        super().__init__()
-
-    # def GetServerList(self, request, context):
-    #     self.logger.info(
-    #         "SERVER LIST REQUEST FROM %s",
-    #         context.peer(),
-    #     )
-    #     return self.registered
-
-    def receive(self, request, context):
+    def Receive(self, request, context):
         print("received")
         return messages_pb2.Success(value="SUCCESS")
 
@@ -41,7 +32,8 @@ class Reducer:
         )
         server.add_insecure_port(IP + ":" + port)  # no TLS moment
         server.start()
-        print(f"{self.intermediate_dir} started on {IP}:{port}")
+        logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
+        server.wait_for_termination()
 
     def reduce(self):
         with open(self.input_file, "r") as f:

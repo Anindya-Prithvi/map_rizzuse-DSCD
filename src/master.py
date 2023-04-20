@@ -5,11 +5,17 @@ import argparse
 import math
 import multiprocessing
 import os
+from time import sleep
 
 from loguru import logger
 
 from map_worker import Mapper
 from reduce_worker import Reducer
+import messages_pb2
+import messages_pb2_grpc
+import grpc
+from concurrent import futures
+import shutil
 
 
 class Master:
@@ -25,8 +31,6 @@ class Master:
         logger.debug("Master node initialized. Starting child nodes.")
         self.initialize_nodes()
         logger.debug("Initializing complete.")
-        __import__("time").sleep(20)
-        self.destroy_nodes()
 
     def run(self):
         """Whenever run is called, the master node should will submit
@@ -36,7 +40,32 @@ class Master:
         # this will create partitions for each mapper
         self.input_split()
 
-        # TODO: Use grpc to send the partitions to the mappers
+        print(self.partitions)
+
+        def send_shard(mapper, partitions):
+            # partitions are basically files
+            # like hadoop, we shall key in line number, value will be readline
+
+            for partition in partitions:
+                with open(os.path.join(self.input_data, partition), "r") as f:
+                    # Read the input data file
+                    filecontent = f.read()
+                    lines = filecontent.split("\n")
+
+                    for key, line in enumerate(lines):
+                        # Send the key, value pair to the mapper
+
+                        with grpc.insecure_channel(mapper["addr"]) as channel:
+                            stub = messages_pb2_grpc.MapProcessInputStub(channel)
+                            response = stub.Receive(messages_pb2.InputMessage(key=str(key), value=line))
+                            assert response.value == "SUCCESS"
+        
+        tpool = futures.ThreadPoolExecutor(max_workers=self.n_map)
+        tpool.map(send_shard, self.mappers, self.partitions)
+        
+        sleep(100000)
+        tpool.shutdown()
+
 
     def initialize_nodes(self):
         """On a production scale we can ask a central(registry) server
@@ -47,7 +76,7 @@ class Master:
                 target=Mapper, kwargs={"PORT": 21337 + i, "IP": "[::1]"}
             )
             p.start()
-            self.mappers.append(p)
+            self.mappers.append({"process": p, "addr": f"[::1]:{21337 + i}"})
 
         """Initialize and register the reducers"""
         for i in range(self.n_reduce):
@@ -55,16 +84,16 @@ class Master:
                 target=Reducer, kwargs={"PORT": 31337 + i, "IP": "[::1]"}
             )
             p.start()
-            self.reducers.append(p)
+            self.reducers.append({"process": p, "addr": f"[::1]:{31337 + i}"})
 
     def destroy_nodes(self):
         """Destroy the mappers"""
         for mapper in self.mappers:
-            mapper.terminate()
+            mapper["process"].terminate()
 
         """Destroy the reducers"""
         for reducer in self.reducers:
-            reducer.terminate()
+            reducer["process"].terminate()
 
     def input_split(self):
         """For simplicity, you may assume that the input data
@@ -133,4 +162,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     master = Master(args.input, args.output, args.n_map, args.n_reduce)
-    # master.run()
+    logger.info("Waiting for nodes to initialize...")
+    __import__("time").sleep(3)
+    try:
+        master.run()
+    except KeyboardInterrupt:
+        logger.warning("Keyboard Interrupt. Terminating nodes.")
+    except Exception as e:
+        logger.error(e)
+    
+    master.destroy_nodes()
+    shutil.rmtree("../reduce_intermediate")
+    shutil.rmtree("../map_intermediate")

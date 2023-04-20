@@ -2,11 +2,6 @@ syntax = "proto3";
 
 message InputMessage {
     /// Some field
-    optional string data = 1;
-}
-
-message MappedMessage {
-    /// Some field
     optional string key = 1;
     /// Some field
     optional string value = 2;
@@ -20,10 +15,10 @@ message Success {
 /// Some service
 service MapProcessInput {
     /// Some method
-    rpc receive(InputMessage) returns (Success);
+    rpc Receive(InputMessage) returns (Success);
 }
 
 service ReduceProcessInput {
     /// Some method
-    rpc receive(MappedMessage) returns (Success);
+    rpc Receive(InputMessage) returns (Success);
 }
