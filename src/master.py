@@ -2,6 +2,10 @@
 
 
 from loguru import logger
+import argparse
+import multiprocessing
+from map_worker import Mapper
+from reduce_worker import Reducer
 
 
 class Master:
@@ -12,6 +16,8 @@ class Master:
         self.output_data = output_data
         self.n_map = n_map
         self.n_reduce = n_reduce
+        self.mappers = []
+        self.reducers = []
         logger.debug("Master node initialized. Starting child nodes.")
         self.initialize_nodes()
         logger.debug("Initializing complete.")
@@ -26,8 +32,18 @@ class Master:
         logger.debug("Reduce phase complete. Job complete.")
 
     def initialize_nodes(self):
-        """Initialize and register the mappers and reducers"""
-        pass
+        """Initialize and register the mappers"""
+        for i in range(self.n_map):
+            p = multiprocessing.Process(target=Mapper, args=(None))
+            p.start()
+            self.mappers.append(p)
+
+        """Initialize and register the reducers"""
+        for i in range(self.n_reduce):
+            p = multiprocessing.Process(target=Reducer, args=(None))
+            p.start()
+            self.reducers.append(p)
+        
 
     def input_split(self):
         """For simplicity, you may assume that the input data
@@ -57,3 +73,16 @@ class Master:
         during shuffling and sorting.
         """
         pass
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", help="Input data directory", required=True)
+    parser.add_argument("--output", help="Output data directory", required=True)
+    parser.add_argument("--n_map", help="Number of mappers", required=True)
+    parser.add_argument("--n_reduce", help="Number of reducers", required=True)
+    args = parser.parse_args()
+
+    master = Master(args.input, args.output, args.n_map, args.n_reduce)
+    master.run()
