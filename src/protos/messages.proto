@@ -1,13 +1,29 @@
 syntax = "proto3";
 
-/// Something something
-message Something {
-    /// Something something
-    optional string something = 1;
+message InputMessage {
+    /// Some field
+    optional string data = 1;
+}
+
+message MappedMessage {
+    /// Some field
+    optional string key = 1;
+    /// Some field
+    optional string value = 2;
+}
+
+message Success {
+    /// value of success
+    optional string value = 1;
 }
 
 /// Some service
-service SomeService {
+service MapProcessInput {
     /// Some method
-    rpc SomeMethod(Something) returns (Something);
+    rpc receive(InputMessage) returns (Success);
+}
+
+service ReduceProcessInput {
+    /// Some method
+    rpc receive(MappedMessage) returns (Success);
 }
