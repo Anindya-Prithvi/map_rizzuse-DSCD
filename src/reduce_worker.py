@@ -4,6 +4,6 @@ class Reducer:
         self.output_file = output_file
 
     def map(self):
-        with open(self.input_file, 'r') as f:
+        with open(self.input_file, "r") as f:
             for line in f:
                 self.map_line(line)

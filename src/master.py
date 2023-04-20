@@ -1,9 +1,11 @@
 """This is the file for master node"""
 
 
-from loguru import logger
 import argparse
 import multiprocessing
+
+from loguru import logger
+
 from map_worker import Mapper
 from reduce_worker import Reducer
 
@@ -43,7 +45,6 @@ class Master:
             p = multiprocessing.Process(target=Reducer, args=(None))
             p.start()
             self.reducers.append(p)
-        
 
     def input_split(self):
         """For simplicity, you may assume that the input data
@@ -76,7 +77,6 @@ class Master:
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="Input data directory", required=True)
     parser.add_argument("--output", help="Output data directory", required=True)
