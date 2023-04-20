@@ -6,8 +6,7 @@ import messages_pb2 as messages__pb2
 
 
 class MapProcessInputStub(object):
-    """/ Some service
-    """
+    """/ Some service"""
 
     def __init__(self, channel):
         """Constructor.
@@ -16,58 +15,68 @@ class MapProcessInputStub(object):
             channel: A grpc.Channel.
         """
         self.receive = channel.unary_unary(
-                '/MapProcessInput/receive',
-                request_serializer=messages__pb2.InputMessage.SerializeToString,
-                response_deserializer=messages__pb2.Success.FromString,
-                )
+            "/MapProcessInput/receive",
+            request_serializer=messages__pb2.InputMessage.SerializeToString,
+            response_deserializer=messages__pb2.Success.FromString,
+        )
 
 
 class MapProcessInputServicer(object):
-    """/ Some service
-    """
+    """/ Some service"""
 
     def receive(self, request, context):
-        """/ Some method
-        """
+        """/ Some method"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_MapProcessInputServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'receive': grpc.unary_unary_rpc_method_handler(
-                    servicer.receive,
-                    request_deserializer=messages__pb2.InputMessage.FromString,
-                    response_serializer=messages__pb2.Success.SerializeToString,
-            ),
+        "receive": grpc.unary_unary_rpc_method_handler(
+            servicer.receive,
+            request_deserializer=messages__pb2.InputMessage.FromString,
+            response_serializer=messages__pb2.Success.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'MapProcessInput', rpc_method_handlers)
+        "MapProcessInput", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class MapProcessInput(object):
-    """/ Some service
-    """
+    """/ Some service"""
 
     @staticmethod
-    def receive(request,
+    def receive(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/MapProcessInput/receive',
+            "/MapProcessInput/receive",
             messages__pb2.InputMessage.SerializeToString,
             messages__pb2.Success.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
 
 class ReduceProcessInputStub(object):
@@ -80,53 +89,65 @@ class ReduceProcessInputStub(object):
             channel: A grpc.Channel.
         """
         self.receive = channel.unary_unary(
-                '/ReduceProcessInput/receive',
-                request_serializer=messages__pb2.MappedMessage.SerializeToString,
-                response_deserializer=messages__pb2.Success.FromString,
-                )
+            "/ReduceProcessInput/receive",
+            request_serializer=messages__pb2.MappedMessage.SerializeToString,
+            response_deserializer=messages__pb2.Success.FromString,
+        )
 
 
 class ReduceProcessInputServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def receive(self, request, context):
-        """/ Some method
-        """
+        """/ Some method"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_ReduceProcessInputServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'receive': grpc.unary_unary_rpc_method_handler(
-                    servicer.receive,
-                    request_deserializer=messages__pb2.MappedMessage.FromString,
-                    response_serializer=messages__pb2.Success.SerializeToString,
-            ),
+        "receive": grpc.unary_unary_rpc_method_handler(
+            servicer.receive,
+            request_deserializer=messages__pb2.MappedMessage.FromString,
+            response_serializer=messages__pb2.Success.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ReduceProcessInput', rpc_method_handlers)
+        "ReduceProcessInput", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class ReduceProcessInput(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def receive(request,
+    def receive(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ReduceProcessInput/receive',
+            "/ReduceProcessInput/receive",
             messages__pb2.MappedMessage.SerializeToString,
             messages__pb2.Success.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )

@@ -35,24 +35,28 @@ class Master:
 
         # this will create partitions for each mapper
         self.input_split()
-        
-        #TODO: Use grpc to send the partitions to the mappers
+
+        # TODO: Use grpc to send the partitions to the mappers
 
     def initialize_nodes(self):
         """On a production scale we can ask a central(registry) server
         to create the mappers and reducers for us. Not here tho."""
         """Initialize and register the mappers"""
         for i in range(self.n_map):
-            p = multiprocessing.Process(target=Mapper, kwargs={"PORT":21337+i, "IP":"[::1]"})
+            p = multiprocessing.Process(
+                target=Mapper, kwargs={"PORT": 21337 + i, "IP": "[::1]"}
+            )
             p.start()
             self.mappers.append(p)
 
         """Initialize and register the reducers"""
         for i in range(self.n_reduce):
-            p = multiprocessing.Process(target=Reducer, kwargs={"PORT":31337+i, "IP":"[::1]"})
+            p = multiprocessing.Process(
+                target=Reducer, kwargs={"PORT": 31337 + i, "IP": "[::1]"}
+            )
             p.start()
             self.reducers.append(p)
-    
+
     def destroy_nodes(self):
         """Destroy the mappers"""
         for mapper in self.mappers:
@@ -123,7 +127,9 @@ if __name__ == "__main__":
     parser.add_argument("--input", help="Input data directory", required=True)
     parser.add_argument("--output", help="Output data directory", required=True)
     parser.add_argument("--n_map", help="Number of mappers", required=True, type=int)
-    parser.add_argument("--n_reduce", help="Number of reducers", required=True, type=int)
+    parser.add_argument(
+        "--n_reduce", help="Number of reducers", required=True, type=int
+    )
     args = parser.parse_args()
 
     master = Master(args.input, args.output, args.n_map, args.n_reduce)
