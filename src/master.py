@@ -58,7 +58,9 @@ class Master:
                         with grpc.insecure_channel(mapper["addr"]) as channel:
                             stub = messages_pb2_grpc.MapProcessInputStub(channel)
                             response = stub.Receive(
-                                messages_pb2.InputMessage(key=str(key), value=line)
+                                messages_pb2.InputMessage(
+                                    key=str(key) + partition, value=line
+                                )
                             )
                             assert response.value == "SUCCESS"
 
