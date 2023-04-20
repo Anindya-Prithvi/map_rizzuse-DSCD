@@ -8,6 +8,8 @@ __pycache__/
 
 # Rust >>> Python
 .ruff_cache/
+map_intermediate/
+reduce_intermediate/
 
 # Distribution / packaging
 .Python

@@ -1,5 +1,5 @@
 all:
-	python -m grpc_tools.protoc -I ../protos --python_out=. --grpc_python_out=. messages.proto
+	python -m grpc_tools.protoc -I ./protos --python_out=. --grpc_python_out=. messages.proto
 
 clean:
 	rm -r replicas

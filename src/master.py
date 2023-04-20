@@ -25,31 +25,42 @@ class Master:
         logger.debug("Master node initialized. Starting child nodes.")
         self.initialize_nodes()
         logger.debug("Initializing complete.")
+        __import__("time").sleep(20)
+        self.destroy_nodes()
 
     def run(self):
+        """Whenever run is called, the master node should will submit
+        the input data to the mappers and wait for job completion."""
         logger.debug("Starting Input Split.")
+
+        # this will create partitions for each mapper
         self.input_split()
-        # TODO: Spawn processes for mappers
-        logger.debug("Starting map phase.")
-        self.map()
-        logger.debug("Map phase complete. Starting partition phase.")
-        self.partition()
-        logger.debug("Partition phase complete. Starting reduce phase.")
-        self.reduce()
-        logger.debug("Reduce phase complete. Job complete.")
+        
+        #TODO: Use grpc to send the partitions to the mappers
 
     def initialize_nodes(self):
+        """On a production scale we can ask a central(registry) server
+        to create the mappers and reducers for us. Not here tho."""
         """Initialize and register the mappers"""
         for i in range(self.n_map):
-            p = multiprocessing.Process(target=Mapper, args=(None))
+            p = multiprocessing.Process(target=Mapper, kwargs={"PORT":21337+i, "IP":"[::1]"})
             p.start()
             self.mappers.append(p)
 
         """Initialize and register the reducers"""
         for i in range(self.n_reduce):
-            p = multiprocessing.Process(target=Reducer, args=(None))
+            p = multiprocessing.Process(target=Reducer, kwargs={"PORT":31337+i, "IP":"[::1]"})
             p.start()
             self.reducers.append(p)
+    
+    def destroy_nodes(self):
+        """Destroy the mappers"""
+        for mapper in self.mappers:
+            mapper.terminate()
+
+        """Destroy the reducers"""
+        for reducer in self.reducers:
+            reducer.terminate()
 
     def input_split(self):
         """For simplicity, you may assume that the input data
@@ -111,9 +122,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="Input data directory", required=True)
     parser.add_argument("--output", help="Output data directory", required=True)
-    parser.add_argument("--n_map", help="Number of mappers", required=True)
-    parser.add_argument("--n_reduce", help="Number of reducers", required=True)
+    parser.add_argument("--n_map", help="Number of mappers", required=True, type=int)
+    parser.add_argument("--n_reduce", help="Number of reducers", required=True, type=int)
     args = parser.parse_args()
 
     master = Master(args.input, args.output, args.n_map, args.n_reduce)
-    master.run()
+    # master.run()
