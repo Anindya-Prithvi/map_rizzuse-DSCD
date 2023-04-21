@@ -11,7 +11,7 @@ import messages_pb2_grpc
 
 class MapProcessInput(messages_pb2_grpc.MapProcessInputServicer):
     def Receive(self, request, context):
-        print("received", request.key, request.value)
+        # print("received", request.key, request.value)
         return messages_pb2.Success(value="SUCCESS")
 
 
@@ -32,7 +32,7 @@ class Mapper:
         )
         server.add_insecure_port(IP + ":" + port)  # no TLS moment
         server.start()
-        logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
+        # logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
         server.wait_for_termination()
 
     def map(self):

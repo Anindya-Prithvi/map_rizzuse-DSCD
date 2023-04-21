@@ -7,6 +7,7 @@ import multiprocessing
 import os
 import shutil
 from concurrent import futures
+from functools import reduce
 from time import sleep
 
 import grpc
@@ -62,12 +63,18 @@ class Master:
                                     key=str(key) + partition, value=line
                                 )
                             )
-                            assert response.value == "SUCCESS"
+                            try:
+                                assert response.value == "SUCCESS"
+                            except AssertionError:
+                                return False
+            return True
 
         tpool = futures.ThreadPoolExecutor(max_workers=self.n_map)
-        tpool.map(send_shard, self.mappers, self.partitions)
+        tpool_map = tpool.map(send_shard, self.mappers, self.partitions)
 
-        sleep(100000)
+        if reduce(lambda x, y: x and y, tpool_map):
+            logger.debug("Job finished successfully.")
+
         tpool.shutdown()
 
     def initialize_nodes(self):
@@ -88,6 +95,18 @@ class Master:
             )
             p.start()
             self.reducers.append({"process": p, "addr": f"[::1]:{31337 + i}"})
+
+        # check all live mapper processes
+        for mapper in self.mappers:
+            if not mapper["process"].is_alive():
+                raise Exception(f"Mapper process {mapper} died.")
+
+        # check all live reducer processes
+        for reducer in self.reducers:
+            if not reducer["process"].is_alive():
+                raise Exception(f"Reducer process {mapper} died.")
+
+        logger.debug("All child nodes initialized.")
 
     def destroy_nodes(self):
         """Destroy the mappers"""
@@ -166,7 +185,7 @@ if __name__ == "__main__":
 
     master = Master(args.input, args.output, args.n_map, args.n_reduce)
     logger.info("Waiting for nodes to initialize...")
-    __import__("time").sleep(3)
+    __import__("time").sleep(1.6)
     try:
         master.run()
     except KeyboardInterrupt:

@@ -11,7 +11,7 @@ import messages_pb2_grpc
 
 class ReduceProcessInput(messages_pb2_grpc.ReduceProcessInputServicer):
     def Receive(self, request, context):
-        print("received")
+        # print("received")
         return messages_pb2.Success(value="SUCCESS")
 
 
@@ -32,7 +32,7 @@ class Reducer:
         )
         server.add_insecure_port(IP + ":" + port)  # no TLS moment
         server.start()
-        logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
+        # logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
         server.wait_for_termination()
 
     def reduce(self):
