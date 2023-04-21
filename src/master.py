@@ -8,7 +8,6 @@ import os
 import shutil
 from concurrent import futures
 from functools import reduce
-from time import sleep
 
 import grpc
 from loguru import logger
@@ -129,7 +128,6 @@ class Master:
             for i in range(0, len(input_files), files_per_mapper)
         ]
 
-    # key -> document name, value -> document content  || figure out how to go about map function parameters
     def map(self, key, value, input_files):
         """Map function to each input split to generate
         intermediate key-value pairs. The Map function takes a
@@ -155,7 +153,7 @@ class Master:
                 for word in words:
                     intermediate_key_values.add((word, "1"))
 
-                # Write the intermediate key-value pairs to a file in the mapper's directory
+                # Write the intermediate key-value pairs to a file in the mapper's dir
                 output_file = os.path.join(self.output_data, input_file)
                 with open(output_file, "w") as f:
                     for intermediate_key, intermediate_value in intermediate_key_values:
