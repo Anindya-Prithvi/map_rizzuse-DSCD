@@ -50,11 +50,19 @@ black --check --diff .
 if [ $? -ne 0 ]; then
     echo "Black failed. Running formatter"
     black .
+    if [ $? -ne 0 ]; then
+        echo "Black command failed itself. Exiting"
+        exit 1
+    fi
 fi
 isort --check-only --diff .
 if [ $? -ne 0 ]; then
     echo "isort failed. Running formatter"
     isort .
+    if [ $? -ne 0 ]; then
+        echo "isort command failed itself. Exiting"
+        exit 1
+    fi
 fi
 git add .
 echo "Formatted code"

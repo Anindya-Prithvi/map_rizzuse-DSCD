@@ -130,7 +130,6 @@ class Master:
             for i in range(0, len(input_files), files_per_mapper)
         ]
 
-
     # will be moved to map_worker
     def map(self, key, value, input_files):
         """Map function to each input split to generate
