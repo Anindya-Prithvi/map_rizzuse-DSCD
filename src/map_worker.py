@@ -29,8 +29,11 @@ class MapProcessInput(messages_pb2_grpc.MapProcessInputServicer):
                     if not file_handle[0].locked():
                         file_handle[1].close()
                         break
+
+            # tell all n_reduce reducers about their file and partition
+            # assumption same as for master node, reducer may read from a DFS
+            # TODO: implement this
         else:
-            self.mapper.given_files.append(request.value)
             self.mapper.parse_and_map(request.value)
 
         return messages_pb2.Success(value="SUCCESS")
@@ -42,7 +45,6 @@ class Mapper:
         self.intermediate_dir = f"map_{secrets.token_urlsafe(8)}"
         self.ready_to_reduce = False
         self.n_reduce = n_reduce
-        self.given_files = []
 
         if not os.path.exists("../map_intermediate"):
             os.mkdir("../map_intermediate")
