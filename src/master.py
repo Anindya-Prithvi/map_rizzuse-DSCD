@@ -5,7 +5,6 @@ import argparse
 import math
 import multiprocessing
 import os
-import shutil
 from concurrent import futures
 from functools import reduce
 
@@ -35,44 +34,38 @@ class Master:
     def run(self):
         """Whenever run is called, the master node should will submit
         the input data to the mappers and wait for job completion."""
-        logger.debug("Starting Input Split.")
+        logger.debug("Sending file locations to mappers.")
 
         # this will create partitions for each mapper
         self.input_split()
 
         logger.debug(f"input splits: {self.partitions}")
 
+        # Master should not read the actual content of the files. Master should just
+        # pass the file location to the mappers. Mappers should read the files from
+        # the file location.
         def send_shard(mapper, partitions):
             # partitions are basically files
-            # like hadoop, we shall key in line number, value will be readline
 
             for partition in partitions:
-                with open(os.path.join(self.input_data, partition), "r") as f:
-                    # Read the input data file
-                    filecontent = f.read()
-                    lines = filecontent.split("\n")
+                with grpc.insecure_channel(mapper["addr"]) as channel:
+                    stub = messages_pb2_grpc.MapProcessInputStub(channel)
+                    response = stub.Receive(
+                        messages_pb2.InputMessage(
+                            value=os.path.join(self.input_data, partition)
+                        )
+                    )
+                    try:
+                        assert response.value == "SUCCESS"
+                    except AssertionError:
+                        return False
 
-                    for key, line in enumerate(lines):
-                        # Send the key, value pair to the mapper
-
-                        with grpc.insecure_channel(mapper["addr"]) as channel:
-                            stub = messages_pb2_grpc.MapProcessInputStub(channel)
-                            response = stub.Receive(
-                                messages_pb2.InputMessage(
-                                    key=str(key) + partition, value=line
-                                )
-                            )
-                            try:
-                                assert response.value == "SUCCESS"
-                            except AssertionError:
-                                return False
-
-            # send an EOF message too
+            # send an EOP (end of partitions) message too
             with grpc.insecure_channel(mapper["addr"]) as channel:
-                logger.debug(f"Sending <EOF> to mapper {mapper['addr']}")
+                logger.debug(f"Sending <EOP> to mapper {mapper['addr']}")
                 stub = messages_pb2_grpc.MapProcessInputStub(channel)
                 response = stub.Receive(
-                    messages_pb2.InputMessage(key="<EOF>", value="<EOF>")
+                    messages_pb2.InputMessage(key="<EOP>", value="<EOP>")
                 )
                 try:
                     assert response.value == "SUCCESS"
@@ -97,7 +90,8 @@ class Master:
         """Initialize and register the mappers"""
         for i in range(self.n_map):
             p = multiprocessing.Process(
-                target=Mapper, kwargs={"PORT": 21337 + i, "IP": "[::1]"}
+                target=Mapper,
+                kwargs={"PORT": 21337 + i, "IP": "[::1]", "n_reduce": self.n_reduce},
             )
             p.start()
             self.mappers.append({"process": p, "addr": f"[::1]:{21337 + i}"})
@@ -110,6 +104,8 @@ class Master:
             p.start()
             self.reducers.append({"process": p, "addr": f"[::1]:{31337 + i}"})
 
+        logger.info("Waiting for nodes to initialize and bind...")
+        __import__("time").sleep(1.6)
         # check all live mapper processes
         for mapper in self.mappers:
             if not mapper["process"].is_alive():
@@ -158,25 +154,19 @@ if __name__ == "__main__":
     if args.config:
         with open(args.config, "r") as f:
             config = f.read().strip().split("\n")
-            # check if first line has word "Mappers"
-            assert (
-                config[0].split("=")[0].strip() == "Mappers"
-            ), "First line of config file should have word 'Mappers'"
-            # check if second line has word "Reducers"
-            assert (
-                config[1].split("=")[0].strip() == "Reducers"
-            ), "Second line of config file should have word 'Reducers'"
-
-            args.n_map = int(config[0].split("=")[-1].strip())
-            args.n_reduce = int(config[1].split("=")[-1].strip())
+            # make dictionary of options like "key = value"
+            config = {(_i := i.split("="))[0].strip(): _i[1].strip() for i in config}
+            args.n_map = int(config["Mappers"])
+            args.n_reduce = int(config["Reducers"])
     else:
         assert (
             args.n_map and args.n_reduce
         ), "Either provide a config file or provide both --n_map and --n_reduce"
 
+    logger.debug(f"mappers: {args.n_map}, reducers: {args.n_reduce}")
+
     master = Master(args.input, args.output, args.n_map, args.n_reduce)
-    logger.info("Waiting for nodes to initialize and bind...")
-    __import__("time").sleep(1.6)
+
     try:
         master.run()
     except KeyboardInterrupt:
@@ -185,5 +175,5 @@ if __name__ == "__main__":
         logger.error(e)
 
     master.destroy_nodes()
-    shutil.rmtree("../reduce_intermediate")
-    shutil.rmtree("../map_intermediate")
+    # shutil.rmtree("../reduce_intermediate")
+    # shutil.rmtree("../map_intermediate")
