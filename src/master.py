@@ -136,7 +136,7 @@ class Master:
         consists of multiple data files and each file is
         processed by a separate mapper.
         """
-        input_files = os.listdir(self.input_data)
+        input_files = os.listdir(self.input_data)  # no filtering
         files_per_mapper = math.ceil(len(os.listdir(self.input_data)) / self.n_map)
         self.partitions = [
             input_files[i : i + files_per_mapper]
@@ -148,11 +148,31 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="Input data directory", required=True)
     parser.add_argument("--output", help="Output data directory", required=True)
-    parser.add_argument("--n_map", help="Number of mappers", required=True, type=int)
-    parser.add_argument(
-        "--n_reduce", help="Number of reducers", required=True, type=int
-    )
+
+    # either have --config or have both --n_map and --n_reduce
+    parser.add_argument("--config", help="Config file")
+    parser.add_argument("--n_map", help="Number of mappers", type=int)
+    parser.add_argument("--n_reduce", help="Number of reducers", type=int)
     args = parser.parse_args()
+
+    if args.config:
+        with open(args.config, "r") as f:
+            config = f.read().strip().split("\n")
+            # check if first line has word "Mappers"
+            assert (
+                config[0].split("=")[0].strip() == "Mappers"
+            ), "First line of config file should have word 'Mappers'"
+            # check if second line has word "Reducers"
+            assert (
+                config[1].split("=")[0].strip() == "Reducers"
+            ), "Second line of config file should have word 'Reducers'"
+
+            args.n_map = int(config[0].split("=")[-1].strip())
+            args.n_reduce = int(config[1].split("=")[-1].strip())
+    else:
+        assert (
+            args.n_map and args.n_reduce
+        ), "Either provide a config file or provide both --n_map and --n_reduce"
 
     master = Master(args.input, args.output, args.n_map, args.n_reduce)
     logger.info("Waiting for nodes to initialize and bind...")
