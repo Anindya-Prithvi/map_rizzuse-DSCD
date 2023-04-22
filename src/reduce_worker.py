@@ -3,7 +3,6 @@ import secrets
 from concurrent import futures
 
 import grpc
-from loguru import logger
 
 import messages_pb2
 import messages_pb2_grpc

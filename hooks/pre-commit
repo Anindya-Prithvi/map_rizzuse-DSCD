@@ -64,10 +64,10 @@ if [ $? -ne 0 ]; then
         exit 1
     fi
 fi
-git add .
 echo "Formatted code"
 echo "Running ruff... This will not fail if there are errors"
-ruff .
+ruff . --fix
+git add .
 echo "Testing completed"
 
 # If there are whitespace errors, print the offending file names and fail.
