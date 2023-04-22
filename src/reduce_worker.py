@@ -35,6 +35,7 @@ class Reducer:
         # logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
         server.wait_for_termination()
 
+    # will only be called when IF received from all mappers
     def reduce(self):
         with open(self.input_file, "r") as f:
             for line in f:
