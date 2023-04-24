@@ -78,11 +78,41 @@ class Master:
         tpool_map = tpool.map(send_shard, self.mappers, self.partitions)
 
         if reduce(lambda x, y: x and y, tpool_map):
-            logger.debug("Job finished successfully.")
+            logger.debug("Map phase finished successfully.")
         else:
             logger.debug("Some nodes seem to have failed.")
 
         tpool.shutdown()
+
+        # time for reduce phase
+        logger.debug("Sending intermediate file locations to reducers.")
+
+        def send_IF(reducer, node_num):
+            with grpc.insecure_channel(reducer["addr"]) as channel:
+                stub = messages_pb2_grpc.ReduceProcessInputStub(channel)
+                response = stub.Receive(
+                    messages_pb2.InputMessage(
+                        key=str(node_num), value="../map_intermediate"
+                    )
+                )
+                try:
+                    assert response.value == "SUCCESS"
+                except AssertionError:
+                    return False
+
+                return True
+
+        tpool = futures.ThreadPoolExecutor(max_workers=self.n_reduce)
+        tpool_map = tpool.map(send_IF, self.reducers, range(self.n_reduce))
+
+        if reduce(lambda x, y: x and y, tpool_map):
+            logger.debug("Reduce phase finished successfully.")
+        else:
+            logger.debug("Some nodes seem to have failed.")
+
+        tpool.shutdown()
+
+        logger.debug("Job finished.")
 
     def initialize_nodes(self):
         """On a production scale we can ask a central(registry) server
@@ -175,5 +205,6 @@ if __name__ == "__main__":
         logger.error(e)
 
     master.destroy_nodes()
+    # import shutil
     # shutil.rmtree("../reduce_intermediate")
     # shutil.rmtree("../map_intermediate")

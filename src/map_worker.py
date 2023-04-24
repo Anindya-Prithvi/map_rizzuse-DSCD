@@ -29,10 +29,6 @@ class MapProcessInput(messages_pb2_grpc.MapProcessInputServicer):
                     if not file_handle[0].locked():
                         file_handle[1].close()
                         break
-
-            # tell all n_reduce reducers about their file and partition
-            # assumption same as for master node, reducer may read from a DFS
-            # TODO: implement this
         else:
             self.mapper.parse_and_map(request.value)
 

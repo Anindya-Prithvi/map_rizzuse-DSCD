@@ -3,6 +3,7 @@ import secrets
 from concurrent import futures
 
 import grpc
+from loguru import logger
 
 import messages_pb2
 import messages_pb2_grpc
@@ -11,6 +12,8 @@ import messages_pb2_grpc
 class ReduceProcessInput(messages_pb2_grpc.ReduceProcessInputServicer):
     def Receive(self, request, context):
         # print("received")
+        __import__(name="time").sleep(__import__("random").random())
+        logger.debug(f"received {request.key} {request.value}")
         return messages_pb2.Success(value="SUCCESS")
 
 
