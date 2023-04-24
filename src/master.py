@@ -16,6 +16,8 @@ import messages_pb2_grpc
 from map_worker import Mapper
 from reduce_worker import Reducer
 
+MAP_INTERMEDIATE_LOC = "../map_intermediate"
+
 
 class Master:
     """Master node class"""
@@ -92,7 +94,7 @@ class Master:
                 stub = messages_pb2_grpc.ReduceProcessInputStub(channel)
                 response = stub.Receive(
                     messages_pb2.InputMessage(
-                        key=str(node_num), value="../map_intermediate"
+                        key=str(node_num), value=MAP_INTERMEDIATE_LOC
                     )
                 )
                 try:
@@ -129,7 +131,13 @@ class Master:
         """Initialize and register the reducers"""
         for i in range(self.n_reduce):
             p = multiprocessing.Process(
-                target=Reducer, kwargs={"PORT": 31337 + i, "IP": "[::1]"}
+                target=Reducer,
+                kwargs={
+                    "PORT": 31337 + i,
+                    "IP": "[::1]",
+                    "n_map": self.n_map,
+                    "output_dir": self.output_data,
+                },
             )
             p.start()
             self.reducers.append({"process": p, "addr": f"[::1]:{31337 + i}"})
@@ -174,6 +182,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="Input data directory", required=True)
     parser.add_argument("--output", help="Output data directory", required=True)
+    parser.add_argument("--intermediate", help="Intermediate map data directory")
 
     # either have --config or have both --n_map and --n_reduce
     parser.add_argument("--config", help="Config file")
@@ -207,4 +216,4 @@ if __name__ == "__main__":
     master.destroy_nodes()
     # import shutil
     # shutil.rmtree("../reduce_intermediate")
-    # shutil.rmtree("../map_intermediate")
+    # shutil.rmtree(MAP_INTERMEDIATE_LOC)
