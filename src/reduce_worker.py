@@ -48,6 +48,25 @@ class Reducer:
 
     # will only be called when IF received from all mappers
     def reduce(self, file):
+        # TODO: figure out how to handle maintaining the mappings in global
+        key_values = {}
+
+        # read file line by line and add to key_values
         with open(file, "r") as f:
             for line in f:
                 print(f"[{self.node_name}] reducing {line}")
+                key, value = line.strip().split("\t")
+                if key in key_values:
+                    key_values[key].append(int(value))
+                else:
+                    key_values[key] = [int(value)]
+
+        # write to output file (reducing step)
+        with open("OUTPUT_FILE_PATH", 'w') as output_file:
+            for key in sorted(key_values.keys()):
+                total = sum(key_values[key])
+                output_file.write(f'{key}\t{total}\n')
+
+                
+                
+
