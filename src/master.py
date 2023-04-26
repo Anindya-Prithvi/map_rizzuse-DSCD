@@ -111,7 +111,7 @@ class II:
         """function to reduce the values that belong to the same key."""
         with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:
             for key in self.hashbucket:
-                f.write(f"{key} {sum(self.hashbucket[key])}\n")
+                f.write(f"{key} {self.hashbucket[key]}\n")
 
     def shufflesort(self, file):
         """function to sort the intermediate key-value pairs by key and
