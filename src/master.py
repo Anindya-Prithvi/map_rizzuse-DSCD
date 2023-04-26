@@ -16,19 +16,25 @@ import messages_pb2_grpc
 from map_worker import Mapper
 from reduce_worker import Reducer
 
-MAP_INTERMEDIATE_LOC = "../map_intermediate"
-
 
 class Master:
     """Master node class"""
 
-    def __init__(self, input_data, output_data, n_map, n_reduce):
+    def __init__(
+        self,
+        input_data,
+        output_data,
+        n_map,
+        n_reduce,
+        intermediate="../map_intermediate",
+    ):
         self.input_data = input_data
         self.output_data = output_data
         self.n_map = n_map
         self.n_reduce = n_reduce
         self.mappers = []
         self.reducers = []
+        self.intermediate = intermediate
         logger.debug("Master node initialized. Starting child nodes.")
         self.initialize_nodes()
         logger.debug("Initializing complete.")
@@ -94,7 +100,7 @@ class Master:
                 stub = messages_pb2_grpc.ReduceProcessInputStub(channel)
                 response = stub.Receive(
                     messages_pb2.InputMessage(
-                        key=str(node_num), value=MAP_INTERMEDIATE_LOC
+                        key=str(node_num), value=self.intermediate
                     )
                 )
                 try:
@@ -121,8 +127,8 @@ class Master:
         to create the mappers and reducers for us. Not here tho."""
         """Initialize and register the mappers"""
 
-        if not os.path.exists(MAP_INTERMEDIATE_LOC):
-            os.mkdir(MAP_INTERMEDIATE_LOC)
+        if not os.path.exists(self.intermediate):
+            os.mkdir(self.intermediate)
 
         if not os.path.exists(self.output_data):
             os.mkdir(self.output_data)
@@ -134,7 +140,7 @@ class Master:
                     "PORT": 21337 + i,
                     "IP": "[::1]",
                     "n_reduce": self.n_reduce,
-                    "intermediate_storage": MAP_INTERMEDIATE_LOC,
+                    "intermediate_storage": self.intermediate,
                 },
             )
             p.start()
@@ -194,19 +200,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="Input data directory", required=True)
     parser.add_argument("--output", help="Output data directory", required=True)
-    parser.add_argument("--intermediate", help="Intermediate map data directory")
+    parser.add_argument(
+        "--intermediate",
+        help="Intermediate map data directory",
+        default="../map_intermediate",
+    )
 
     # either have --config or have both --n_map and --n_reduce
     parser.add_argument("--config", help="Config file")
     parser.add_argument("--n_map", help="Number of mappers", type=int)
     parser.add_argument("--n_reduce", help="Number of reducers", type=int)
     args = parser.parse_args()
-
-    # if --intermediate is not provided, use the default
-    if not args.intermediate:
-        args.intermediate = MAP_INTERMEDIATE_LOC
-    else:
-        MAP_INTERMEDIATE_LOC = args.intermediate
 
     if args.config:
         with open(args.config, "r") as f:
@@ -222,7 +226,9 @@ if __name__ == "__main__":
 
     logger.debug(f"mappers: {args.n_map}, reducers: {args.n_reduce}")
 
-    master = Master(args.input, args.output, args.n_map, args.n_reduce)
+    master = Master(
+        args.input, args.output, args.n_map, args.n_reduce, args.intermediate
+    )
 
     try:
         master.run()
@@ -234,4 +240,4 @@ if __name__ == "__main__":
     master.destroy_nodes()
     # import shutil
     # shutil.rmtree("../reduce_intermediate")
-    # shutil.rmtree(MAP_INTERMEDIATE_LOC)
+    # shutil.rmtree("../map_intermediate")

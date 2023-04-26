@@ -53,6 +53,9 @@ class Reducer:
         """function to sort the intermediate key-value pairs by key and
         group the values that belong to the same key.
         """
+        # check if file exists [no work for reducer]
+        if not os.path.isfile(file):
+            return
         with open(file, "r") as f:
             for line in f:
                 key, value = line.strip().split(" ")
