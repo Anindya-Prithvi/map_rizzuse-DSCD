@@ -120,10 +120,22 @@ class Master:
         """On a production scale we can ask a central(registry) server
         to create the mappers and reducers for us. Not here tho."""
         """Initialize and register the mappers"""
+
+        if not os.path.exists(MAP_INTERMEDIATE_LOC):
+            os.mkdir(MAP_INTERMEDIATE_LOC)
+
+        if not os.path.exists(self.output_data):
+            os.mkdir(self.output_data)
+
         for i in range(self.n_map):
             p = multiprocessing.Process(
                 target=Mapper,
-                kwargs={"PORT": 21337 + i, "IP": "[::1]", "n_reduce": self.n_reduce},
+                kwargs={
+                    "PORT": 21337 + i,
+                    "IP": "[::1]",
+                    "n_reduce": self.n_reduce,
+                    "intermediate_storage": MAP_INTERMEDIATE_LOC,
+                },
             )
             p.start()
             self.mappers.append({"process": p, "addr": f"[::1]:{21337 + i}"})

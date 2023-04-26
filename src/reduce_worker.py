@@ -25,9 +25,7 @@ class Reducer:
         # create directory to store intermediate files
         self.intermediate_dir = f"reduce_{secrets.token_urlsafe(8)}"
         self.node_name = None
-
-        if not os.path.exists(output_dir):
-            os.mkdir(output_dir)
+        self.hashbucket = {}
 
         os.mkdir(output_dir + "/" + self.intermediate_dir)
 
@@ -44,25 +42,23 @@ class Reducer:
     def parse_map_loc(self, map_loc):
         """This function will read all assigned intermediate files of the mapper"""
         for file in os.listdir(map_loc):
-            self.reduce(os.path.join(map_loc, file, self.node_name))
+            self.shufflesort(os.path.join(map_loc, file, self.node_name))
+        self.reduce()
 
     # will only be called when IF received from all mappers
-    def reduce(self, file):
-        # TODO: figure out how to handle maintaining the mappings in global
-        key_values = {}
+    def reduce(self):
+        """function to reduce the values that belong to the same key."""
+        for key in self.hashbucket:
+            print(key, sum(self.hashbucket[key]))
 
-        # read file line by line and add to key_values
+    def shufflesort(self, file):
+        """function to sort the intermediate key-value pairs by key and
+        group the values that belong to the same key.
+        """
         with open(file, "r") as f:
             for line in f:
-                print(f"[{self.node_name}] reducing {line}")
-                key, value = line.strip().split("\t")
-                if key in key_values:
-                    key_values[key].append(int(value))
-                else:
-                    key_values[key] = [int(value)]
-
-        # write to output file (reducing step)
-        with open("OUTPUT_FILE_PATH", "w") as output_file:
-            for key in sorted(key_values.keys()):
-                total = sum(key_values[key])
-                output_file.write(f"{key}\t{total}\n")
+                key, value = line.strip().split(" ")
+                value = int(value)
+                if key not in self.hashbucket:
+                    self.hashbucket[key] = []
+                self.hashbucket[key].append(value)  # mostly 1 since no local reduce

@@ -1,6 +1,7 @@
 import os
 import secrets
 from concurrent import futures
+from hashlib import md5 as hash
 from threading import Lock
 
 import grpc
@@ -36,16 +37,14 @@ class MapProcessInput(messages_pb2_grpc.MapProcessInputServicer):
 
 
 class Mapper:
-    def __init__(self, PORT, IP, n_reduce):
+    def __init__(self, PORT, IP, n_reduce, intermediate_storage):
         # create directory to store intermediate files
         self.intermediate_dir = f"map_{secrets.token_urlsafe(8)}"
         self.ready_to_reduce = False
         self.n_reduce = n_reduce
+        self.intermediate_storage = intermediate_storage
 
-        if not os.path.exists("../map_intermediate"):
-            os.mkdir("../map_intermediate")
-
-        os.mkdir("../map_intermediate/" + self.intermediate_dir)
+        os.mkdir(path=intermediate_storage + "/" + self.intermediate_dir)
 
         port = str(PORT)
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
@@ -61,7 +60,12 @@ class Mapper:
         self.file_handles = []
         for i in range(self.n_reduce):
             self.file_handles.append(
-                [Lock(), open(f"../map_intermediate/{self.intermediate_dir}/{i}", "a")]
+                [
+                    Lock(),
+                    open(
+                        f"{self.intermediate_storage}/{self.intermediate_dir}/{i}", "a"
+                    ),
+                ]
             )
 
         server.start()
@@ -73,7 +77,7 @@ class Mapper:
             input_data = f.read()
             lines = input_data.split("\n")
             for i, line in enumerate(lines):
-                self.partition(self.map(i, line))
+                self.partition(self.map(i, line.strip()))
 
     def map(self, key, value):
         """Map function to each input split to generate
@@ -86,7 +90,7 @@ class Mapper:
         """
 
         line_words = value.split()
-        l_k_v = [(word, 1) for word in line_words]
+        l_k_v = [(word.lower(), 1) for word in line_words]  # wc case insensitive
         return l_k_v
 
     def partition(self, l_k_v):
@@ -102,8 +106,9 @@ class Mapper:
         # will generate n_reduce intermediate files
 
         for key, value in l_k_v:
+            key_int = int(hash(key.encode()).hexdigest(), 16)
             # hash the key and mod it with n_reduce
             # write the key-value pair to the corresponding file
-            self.file_handles[hash(key) % self.n_reduce][0].acquire()
-            self.file_handles[hash(key) % self.n_reduce][1].write(f"{key} {value}\n")
-            self.file_handles[hash(key) % self.n_reduce][0].release()
+            self.file_handles[key_int % self.n_reduce][0].acquire()
+            self.file_handles[key_int % self.n_reduce][1].write(f"{key} {value}\n")
+            self.file_handles[key_int % self.n_reduce][0].release()
