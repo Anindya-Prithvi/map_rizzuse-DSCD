@@ -45,3 +45,38 @@ class TestMaster(unittest.TestCase):
         time.sleep(0.5)
         master.server.stop(0)
         input("Press enter to start inverted index test.")
+
+    def test03_ii(self):
+        logger.level("DEBUG")
+        logger.debug("Testing master node setup.")
+        master = Master(
+            "src/samples/inverted_index/in",
+            "output_data_inverted_index",
+            3,
+            2,
+            "II",
+            "map_intermediate_inverted_index",
+        )
+        master.run()
+        master.destroy_nodes()
+        time.sleep(0.5)
+        master.server.stop(0)
+        input("Press enter to start natural join test.")
+
+    def test04_nj(self):
+        print("not ready")
+        return
+        logger.level("DEBUG")
+        logger.debug("Testing master node setup.")
+        master = Master(
+            "src/samples/natural_join/in",
+            "output_data_natural_join",
+            3,
+            2,
+            "NJ",
+            "map_intermediate_natural_join",
+        )
+        master.run()
+        master.destroy_nodes()
+        time.sleep(0.5)
+        master.server.stop(0)
