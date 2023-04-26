@@ -70,7 +70,8 @@ class MasterRegistry(messages_pb2_grpc.MasterRegistryServicer):
             and len(self.master.reducers) == self.master.n_reduce
         ):
             if self.startlock.locked():
-                self.startlock.release()  # may be released twice: non critical race condition
+                self.startlock.release()
+                # may be released twice: non critical race condition
         return messages_pb2.Success(value="SUCCESS")
 
 
