@@ -83,6 +83,7 @@ class Master:
         output_data,
         n_map,
         n_reduce,
+        objective,
         intermediate="../map_intermediate",
     ):
         self.input_data = input_data
@@ -91,6 +92,7 @@ class Master:
         self.n_reduce = n_reduce
         self.mappers = []
         self.reducers = []
+        self.objective = objective
         self.intermediate = intermediate
         logger.debug("Master node initialized. Starting child nodes.")
         self.initialize_nodes()
@@ -198,9 +200,9 @@ class Master:
                     "IP": "[::1]",
                     "n_reduce": self.n_reduce,
                     "intermediate_storage": self.intermediate,
-                    "partition": WC.partition,
-                    "parse_and_map": WC.parse_and_map,
-                    "map": WC.map,
+                    "partition": self.objective.partition,
+                    "parse_and_map": self.objective.parse_and_map,
+                    "map": self.objective.map,
                 },
             )
             p.start()
@@ -215,9 +217,9 @@ class Master:
                     "IP": "[::1]",
                     "n_map": self.n_map,
                     "output_dir": self.output_data,
-                    "reduce": WC.reduce,
-                    "parse_map_loc": WC.parse_map_loc,
-                    "shufflesort": WC.shufflesort,
+                    "reduce": self.objective.reduce,
+                    "parse_map_loc": self.objective.parse_map_loc,
+                    "shufflesort": self.objective.shufflesort,
                 },
             )
             p.start()
@@ -290,7 +292,7 @@ if __name__ == "__main__":
     logger.debug(f"mappers: {args.n_map}, reducers: {args.n_reduce}")
 
     master = Master(
-        args.input, args.output, args.n_map, args.n_reduce, args.intermediate
+        args.input, args.output, args.n_map, args.n_reduce, WC, args.intermediate
     )
 
     try:
