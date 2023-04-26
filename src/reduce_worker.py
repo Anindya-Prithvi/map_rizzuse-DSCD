@@ -62,11 +62,7 @@ class Reducer:
                     key_values[key] = [int(value)]
 
         # write to output file (reducing step)
-        with open("OUTPUT_FILE_PATH", 'w') as output_file:
+        with open("OUTPUT_FILE_PATH", "w") as output_file:
             for key in sorted(key_values.keys()):
                 total = sum(key_values[key])
-                output_file.write(f'{key}\t{total}\n')
-
-                
-                
-
+                output_file.write(f"{key}\t{total}\n")

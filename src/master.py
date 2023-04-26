@@ -190,6 +190,12 @@ if __name__ == "__main__":
     parser.add_argument("--n_reduce", help="Number of reducers", type=int)
     args = parser.parse_args()
 
+    # if --intermediate is not provided, use the default
+    if not args.intermediate:
+        args.intermediate = MAP_INTERMEDIATE_LOC
+    else:
+        MAP_INTERMEDIATE_LOC = args.intermediate
+
     if args.config:
         with open(args.config, "r") as f:
             config = f.read().strip().split("\n")
