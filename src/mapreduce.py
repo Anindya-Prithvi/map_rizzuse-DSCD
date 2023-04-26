@@ -109,5 +109,5 @@ class II:
             for line in f:
                 key, value = line.strip().split(" ")
                 if key not in self.hashbucket:
-                    self.hashbucket[key] = []
-                self.hashbucket[key].append(value)  # mostly 1 since no local reduce
+                    self.hashbucket[key] = set()
+                self.hashbucket[key].add(value)  
