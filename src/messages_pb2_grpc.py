@@ -6,7 +6,7 @@ import messages_pb2 as messages__pb2
 
 
 class MapProcessInputStub(object):
-    """/ Some service"""
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -19,13 +19,24 @@ class MapProcessInputStub(object):
             request_serializer=messages__pb2.InputMessage.SerializeToString,
             response_deserializer=messages__pb2.Success.FromString,
         )
+        self.Info = channel.unary_unary(
+            "/MapProcessInput/Info",
+            request_serializer=messages__pb2.InputMessage.SerializeToString,
+            response_deserializer=messages__pb2.Success.FromString,
+        )
 
 
 class MapProcessInputServicer(object):
-    """/ Some service"""
+    """Missing associated documentation comment in .proto file."""
 
     def Receive(self, request, context):
-        """/ Some method"""
+        """/ to receive file locations"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def Info(self, request, context):
+        """/ to receive info about what to do"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
@@ -38,6 +49,11 @@ def add_MapProcessInputServicer_to_server(servicer, server):
             request_deserializer=messages__pb2.InputMessage.FromString,
             response_serializer=messages__pb2.Success.SerializeToString,
         ),
+        "Info": grpc.unary_unary_rpc_method_handler(
+            servicer.Info,
+            request_deserializer=messages__pb2.InputMessage.FromString,
+            response_serializer=messages__pb2.Success.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
         "MapProcessInput", rpc_method_handlers
@@ -47,7 +63,7 @@ def add_MapProcessInputServicer_to_server(servicer, server):
 
 # This class is part of an EXPERIMENTAL API.
 class MapProcessInput(object):
-    """/ Some service"""
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def Receive(
@@ -78,6 +94,35 @@ class MapProcessInput(object):
             metadata,
         )
 
+    @staticmethod
+    def Info(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/MapProcessInput/Info",
+            messages__pb2.InputMessage.SerializeToString,
+            messages__pb2.Success.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
 
 class ReduceProcessInputStub(object):
     """Missing associated documentation comment in .proto file."""
@@ -93,13 +138,24 @@ class ReduceProcessInputStub(object):
             request_serializer=messages__pb2.InputMessage.SerializeToString,
             response_deserializer=messages__pb2.Success.FromString,
         )
+        self.Info = channel.unary_unary(
+            "/ReduceProcessInput/Info",
+            request_serializer=messages__pb2.InputMessage.SerializeToString,
+            response_deserializer=messages__pb2.Success.FromString,
+        )
 
 
 class ReduceProcessInputServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Receive(self, request, context):
-        """/ Some method"""
+        """/ to receive intermediate file locations"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def Info(self, request, context):
+        """/ to receive info about what to do"""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
@@ -109,6 +165,11 @@ def add_ReduceProcessInputServicer_to_server(servicer, server):
     rpc_method_handlers = {
         "Receive": grpc.unary_unary_rpc_method_handler(
             servicer.Receive,
+            request_deserializer=messages__pb2.InputMessage.FromString,
+            response_serializer=messages__pb2.Success.SerializeToString,
+        ),
+        "Info": grpc.unary_unary_rpc_method_handler(
+            servicer.Info,
             request_deserializer=messages__pb2.InputMessage.FromString,
             response_serializer=messages__pb2.Success.SerializeToString,
         ),
@@ -140,6 +201,109 @@ class ReduceProcessInput(object):
             request,
             target,
             "/ReduceProcessInput/Receive",
+            messages__pb2.InputMessage.SerializeToString,
+            messages__pb2.Success.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+    @staticmethod
+    def Info(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/ReduceProcessInput/Info",
+            messages__pb2.InputMessage.SerializeToString,
+            messages__pb2.Success.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+
+class MasterRegistryStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Receive = channel.unary_unary(
+            "/MasterRegistry/Receive",
+            request_serializer=messages__pb2.InputMessage.SerializeToString,
+            response_deserializer=messages__pb2.Success.FromString,
+        )
+
+
+class MasterRegistryServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def Receive(self, request, context):
+        """/ works like a registry"""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+
+def add_MasterRegistryServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+        "Receive": grpc.unary_unary_rpc_method_handler(
+            servicer.Receive,
+            request_deserializer=messages__pb2.InputMessage.FromString,
+            response_serializer=messages__pb2.Success.SerializeToString,
+        ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+        "MasterRegistry", rpc_method_handlers
+    )
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+# This class is part of an EXPERIMENTAL API.
+class MasterRegistry(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def Receive(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/MasterRegistry/Receive",
             messages__pb2.InputMessage.SerializeToString,
             messages__pb2.Success.FromString,
             options,

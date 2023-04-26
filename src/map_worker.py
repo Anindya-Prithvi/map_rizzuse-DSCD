@@ -1,4 +1,6 @@
+import json
 import os
+import random
 import secrets
 from concurrent import futures
 from threading import Lock
@@ -12,6 +14,7 @@ import messages_pb2_grpc
 class MapProcessInput(messages_pb2_grpc.MapProcessInputServicer):
     def __init__(self, mapper):
         self.mapper = mapper
+        self.scripts = __import__("mapreduce")
 
     def Receive(self, request, context):
         """This function is called by the master node to send files"""
@@ -34,30 +37,58 @@ class MapProcessInput(messages_pb2_grpc.MapProcessInputServicer):
 
         return messages_pb2.Success(value="SUCCESS")
 
+    def Info(self, request, context):
+        """This function is called by the master node to send info"""
+        # self.n_reduce = n_reduce
+        # self.intermediate_storage = intermediate_storage
+        # self.parse_and_map = parse_and_map -- derived from type
+        # self.partition = partition
+        # self.map = map
+
+        kv = json.loads(request.value)
+
+        self.mapper.n_reduce = kv["n_reduce"]
+        self.mapper.intermediate_storage = kv["intermediate_storage"]
+        os.mkdir(kv["intermediate_storage"] + "/" + self.mapper.intermediate_dir)
+
+        curr = getattr(self.scripts, kv["type"])
+        self.mapper.parse_and_map = curr.parse_and_map
+        self.mapper.partition = curr.partition
+        self.mapper.map = curr.map
+
+        self.mapper.startlock.release()
+        return messages_pb2.Success(value="SUCCESS")
+
 
 class Mapper:
-    def __init__(
-        self, PORT, IP, n_reduce, intermediate_storage, parse_and_map, partition, map
-    ):
+    def __init__(self):
         # create directory to store intermediate files
         self.intermediate_dir = f"map_{secrets.token_urlsafe(8)}"
         self.ready_to_reduce = False
-        self.n_reduce = n_reduce
-        self.intermediate_storage = intermediate_storage
-        self.parse_and_map = parse_and_map
-        self.partition = partition
-        self.map = map
+        self.startlock = Lock()
+        self.startlock.acquire()
+        PORT = str(random.randint(62000, 65535))
 
-        os.mkdir(path=intermediate_storage + "/" + self.intermediate_dir)
-
-        port = str(PORT)
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
         self.server = server
         messages_pb2_grpc.add_MapProcessInputServicer_to_server(
             MapProcessInput(self), server
         )
-        server.add_insecure_port(IP + ":" + port)  # no TLS moment
+        server.add_insecure_port(f"[::1]:{PORT}")  # no TLS moment
+        server.start()
 
+        # send message to master about liveliness
+        # master will send other info later
+        with grpc.insecure_channel("[::1]:6969") as channel:
+            stub = messages_pb2_grpc.MasterRegistryStub(channel)
+            response = stub.Receive(
+                messages_pb2.InputMessage(value=f"[::1]:{PORT}", key="map")
+            )
+            assert response.value == "SUCCESS", "Master did not respond with success"
+
+        self.startlock.acquire()
+        if self.startlock.locked():
+            self.startlock.release()
         # open n_reduce files with names 0, 1, 2, ..., n_reduce - 1 in the mapper's dir
         # write the key-value pairs to the corresponding file
 
@@ -72,5 +103,4 @@ class Mapper:
                 ]
             )
 
-        server.start()
         server.wait_for_termination()

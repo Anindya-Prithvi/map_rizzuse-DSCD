@@ -2,11 +2,13 @@
 
 
 import argparse
+import json
 import math
 import multiprocessing
 import os
 from concurrent import futures
 from functools import reduce
+from threading import Lock
 
 import grpc
 from loguru import logger
@@ -17,115 +19,60 @@ from map_worker import Mapper
 from reduce_worker import Reducer
 
 
-class WC:
-    def parse_and_map(self, file):
-        """Prepares input for map function"""
-        with open(file, "r") as f:
-            input_data = f.read()
-            lines = input_data.split("\n")
-            for i, line in enumerate(lines):
-                self.partition(self, self.map(self, i, line.strip()))
+class MasterRegistry(messages_pb2_grpc.MasterRegistryServicer):
+    def __init__(self, master):
+        self.startlock = master.startlock
+        self.master = master
 
-    def map(self, key, value):
-        line_words = value.split()
-        l_k_v = [(word.lower(), 1) for word in line_words]  # wc case insensitive
-        return l_k_v
-
-    def partition(self, l_k_v):
-        from hashlib import md5
-
-        hash = md5
-        # will generate n_reduce intermediate files
-
-        for key, value in l_k_v:
-            key_int = int(hash(key.encode()).hexdigest(), 16)
-            # hash the key and mod it with n_reduce
-            # write the key-value pair to the corresponding file
-            self.file_handles[key_int % self.n_reduce][0].acquire()
-            self.file_handles[key_int % self.n_reduce][1].write(f"{key} {value}\n")
-            self.file_handles[key_int % self.n_reduce][0].release()
-
-    def parse_map_loc(self, map_loc):
-        """This function will read all assigned intermediate files of the mapper"""
-        for file in os.listdir(map_loc):
-            self.shufflesort(self, os.path.join(map_loc, file, self.node_name))
-        self.reduce(self)
-
-    # will only be called when IF received from all mappers
-    def reduce(self):
-        """function to reduce the values that belong to the same key."""
-        with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:
-            for key in self.hashbucket:
-                f.write(f"{key} {sum(self.hashbucket[key])}\n")
-
-    def shufflesort(self, file):
-        """function to sort the intermediate key-value pairs by key and
-        group the values that belong to the same key.
+    def Receive(self, request, context):
+        """This function is called workers to notify their location.
+        key will be either "map" or "reduce"
+        value will be the IP:PORT of the worker
         """
-        # check if file exists [no work for reducer]
-        if not os.path.isfile(file):
-            return
-        with open(file, "r") as f:
-            for line in f:
-                key, value = line.strip().split(" ")
-                value = int(value)
-                if key not in self.hashbucket:
-                    self.hashbucket[key] = []
-                self.hashbucket[key].append(value)  # mostly 1 since no local reduce
+        if request.key == "map":
+            self.master.mappers.append(request.value)
+            # also send task of mapper
+            with grpc.insecure_channel(request.value) as channel:
+                stub = messages_pb2_grpc.MapProcessInputStub(channel)
+                response = stub.Info(
+                    messages_pb2.InputMessage(
+                        value=json.dumps(
+                            {
+                                "n_reduce": self.master.n_reduce,
+                                "intermediate_storage": self.master.intermediate,
+                                "type": self.master.objective.__name__,
+                            }
+                        )
+                    )
+                )
+                assert response.value == "SUCCESS"
 
-class II:
-    def parse_and_map(self, file):
-        """Prepares input for map function"""
-        with open(file, "r") as f:
-            input_data = f.read()
-            lines = input_data.split("\n")
-            for line in lines:
-                self.partition(self, self.map(self, file, line.strip()))
-    
-    def map(self, key, value):
-        line_words = value.split()
-        l_k_v = [(word.lower(), key) for word in line_words]  # wc case insensitive
-        return l_k_v
-    
-    def partition(self, l_k_v):
-        from hashlib import md5
+        elif request.key == "reduce":
+            self.master.reducers.append(request.value)
+            # also send task of reducer
+            with grpc.insecure_channel(request.value) as channel:
+                stub = messages_pb2_grpc.ReduceProcessInputStub(channel)
+                response = stub.Info(
+                    messages_pb2.InputMessage(
+                        value=json.dumps(
+                            {
+                                "n_map": self.master.n_map,
+                                "output_dir": self.master.output_data,
+                                "type": self.master.objective.__name__,
+                            }
+                        )
+                    )
+                )
+                assert response.value == "SUCCESS"
 
-        hash = md5
-        # will generate n_reduce intermediate files
+        if (
+            len(self.master.mappers) == self.master.n_map
+            and len(self.master.reducers) == self.master.n_reduce
+        ):
+            if self.startlock.locked():
+                self.startlock.release()  # may be released twice: non critical race condition
+        return messages_pb2.Success(value="SUCCESS")
 
-        for key, value in l_k_v:
-            key_int = int(hash(key.encode()).hexdigest(), 16)
-            # hash the key and mod it with n_reduce
-            # write the key-value pair to the corresponding file
-            self.file_handles[key_int % self.n_reduce][0].acquire()
-            self.file_handles[key_int % self.n_reduce][1].write(f"{key} {value}\n")
-            self.file_handles[key_int % self.n_reduce][0].release()
-
-    def parse_map_loc(self, map_loc):
-        """This function will read all assigned intermediate files of the mapper"""
-        for file in os.listdir(map_loc):
-            self.shufflesort(self, os.path.join(map_loc, file, self.node_name))
-        self.reduce(self)
-
-    def reduce(self):
-        """function to reduce the values that belong to the same key."""
-        with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:
-            for key in self.hashbucket:
-                f.write(f"{key} {self.hashbucket[key]}\n")
-
-    def shufflesort(self, file):
-        """function to sort the intermediate key-value pairs by key and
-        group the values that belong to the same key.
-        """
-        # check if file exists [no work for reducer]
-        if not os.path.isfile(file):
-            return
-        with open(file, "r") as f:
-            for line in f:
-                key, value = line.strip().split(" ")
-                if key not in self.hashbucket:
-                    self.hashbucket[key] = []
-                self.hashbucket[key].append(value)  # mostly 1 since no local reduce
 
 class Master:
     """Master node class"""
@@ -139,14 +86,27 @@ class Master:
         objective,
         intermediate="../map_intermediate",
     ):
+        self.scripts = __import__("mapreduce")
         self.input_data = input_data
         self.output_data = output_data
         self.n_map = n_map
         self.n_reduce = n_reduce
+        self.processes = []  # anonymous
         self.mappers = []
         self.reducers = []
-        self.objective = objective
+        self.objective = getattr(self.scripts, objective)
         self.intermediate = intermediate
+        self.startlock = Lock()
+        self.startlock.acquire()
+
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=69))
+        self.server = server
+        self.server = server
+        messages_pb2_grpc.add_MasterRegistryServicer_to_server(
+            MasterRegistry(self), server
+        )
+        server.add_insecure_port("[::]:6969")  # binding to 0.0.0.0
+        server.start()
         logger.debug("Master node initialized. Starting child nodes.")
         self.initialize_nodes()
         logger.debug("Initializing complete.")
@@ -168,7 +128,7 @@ class Master:
             # partitions are basically files
 
             for partition in partitions:
-                with grpc.insecure_channel(mapper["addr"]) as channel:
+                with grpc.insecure_channel(mapper) as channel:
                     stub = messages_pb2_grpc.MapProcessInputStub(channel)
                     response = stub.Receive(
                         messages_pb2.InputMessage(
@@ -181,8 +141,8 @@ class Master:
                         return False
 
             # send an EOP (end of partitions) message too
-            with grpc.insecure_channel(mapper["addr"]) as channel:
-                logger.debug(f"Sending <EOP> to mapper {mapper['addr']}")
+            with grpc.insecure_channel(mapper) as channel:
+                logger.debug(f"Sending <EOP> to mapper {mapper}")
                 stub = messages_pb2_grpc.MapProcessInputStub(channel)
                 response = stub.Receive(
                     messages_pb2.InputMessage(key="<EOP>", value="<EOP>")
@@ -208,7 +168,7 @@ class Master:
         logger.debug("Sending intermediate file locations to reducers.")
 
         def send_IF(reducer, node_num):
-            with grpc.insecure_channel(reducer["addr"]) as channel:
+            with grpc.insecure_channel(reducer) as channel:
                 stub = messages_pb2_grpc.ReduceProcessInputStub(channel)
                 response = stub.Receive(
                     messages_pb2.InputMessage(
@@ -237,7 +197,6 @@ class Master:
     def initialize_nodes(self):
         """On a production scale we can ask a central(registry) server
         to create the mappers and reducers for us. Not here tho."""
-        """Initialize and register the mappers"""
 
         if not os.path.exists(self.intermediate):
             os.mkdir(self.intermediate)
@@ -245,61 +204,40 @@ class Master:
         if not os.path.exists(self.output_data):
             os.mkdir(self.output_data)
 
+        """Initialize the mappers"""
         for i in range(self.n_map):
             p = multiprocessing.Process(
                 target=Mapper,
-                kwargs={
-                    "PORT": 21337 + i,
-                    "IP": "[::1]",
-                    "n_reduce": self.n_reduce,
-                    "intermediate_storage": self.intermediate,
-                    "partition": self.objective.partition,
-                    "parse_and_map": self.objective.parse_and_map,
-                    "map": self.objective.map,
-                },
             )
             p.start()
-            self.mappers.append({"process": p, "addr": f"[::1]:{21337 + i}"})
+            self.processes.append(p)
 
-        """Initialize and register the reducers"""
+        """Initialize the reducers"""
         for i in range(self.n_reduce):
             p = multiprocessing.Process(
                 target=Reducer,
-                kwargs={
-                    "PORT": 31337 + i,
-                    "IP": "[::1]",
-                    "n_map": self.n_map,
-                    "output_dir": self.output_data,
-                    "reduce": self.objective.reduce,
-                    "parse_map_loc": self.objective.parse_map_loc,
-                    "shufflesort": self.objective.shufflesort,
-                },
             )
             p.start()
-            self.reducers.append({"process": p, "addr": f"[::1]:{31337 + i}"})
+            self.processes.append(p)
 
         logger.info("Waiting for nodes to initialize and bind...")
-        __import__("time").sleep(1.6)
-        # check all live mapper processes
-        for mapper in self.mappers:
-            if not mapper["process"].is_alive():
-                raise Exception(f"Mapper process {mapper} died.")
+        self.startlock.acquire()
+        # check all live processes
+        for p in self.processes:
+            if not p.is_alive():
+                logger.error("Some nodes seem to have failed.")
+                self.destroy_nodes()
+                exit(1)
 
-        # check all live reducer processes
-        for reducer in self.reducers:
-            if not reducer["process"].is_alive():
-                raise Exception(f"Reducer process {mapper} died.")
-
+        # now we will wait for all mappers and reducers to notify master
         logger.debug("All child nodes initialized.")
+        if self.startlock.locked():
+            self.startlock.release()  # non critical
 
     def destroy_nodes(self):
-        """Destroy the mappers"""
-        for mapper in self.mappers:
-            mapper["process"].terminate()
-
-        """Destroy the reducers"""
-        for reducer in self.reducers:
-            reducer["process"].terminate()
+        """Terminate all processes"""
+        for process in self.processes:
+            process.terminate()
 
     def input_split(self):
         """For simplicity, you may assume that the input data
@@ -345,7 +283,7 @@ if __name__ == "__main__":
     logger.debug(f"mappers: {args.n_map}, reducers: {args.n_reduce}")
 
     master = Master(
-        args.input, args.output, args.n_map, args.n_reduce, WC, args.intermediate
+        args.input, args.output, args.n_map, args.n_reduce, "WC", args.intermediate
     )
 
     try:
