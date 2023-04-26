@@ -1,0 +1,4 @@
+Mappers = 2
+Reducers = 2
+
+# Note: It is possible that each input table is stored in multiple files.(Check the shared link for further details about implementation).

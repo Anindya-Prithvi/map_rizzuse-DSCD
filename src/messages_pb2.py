@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x0emessages.proto"F\n\x0cInputMessage\x12\x10\n\x03key\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x12\n\x05value\x18\x02 \x01(\tH\x01\x88\x01\x01\x42\x06\n\x04_keyB\x08\n\x06_value"\'\n\x07Success\x12\x12\n\x05value\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_value25\n\x0fMapProcessInput\x12"\n\x07Receive\x12\r.InputMessage\x1a\x08.Success28\n\x12ReduceProcessInput\x12"\n\x07Receive\x12\r.InputMessage\x1a\x08.Successb\x06proto3'
+    b'\n\x0emessages.proto"F\n\x0cInputMessage\x12\x10\n\x03key\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x12\n\x05value\x18\x02 \x01(\tH\x01\x88\x01\x01\x42\x06\n\x04_keyB\x08\n\x06_value"\'\n\x07Success\x12\x12\n\x05value\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_value2V\n\x0fMapProcessInput\x12"\n\x07Receive\x12\r.InputMessage\x1a\x08.Success\x12\x1f\n\x04Info\x12\r.InputMessage\x1a\x08.Success2Y\n\x12ReduceProcessInput\x12"\n\x07Receive\x12\r.InputMessage\x1a\x08.Success\x12\x1f\n\x04Info\x12\r.InputMessage\x1a\x08.Success24\n\x0eMasterRegistry\x12"\n\x07Receive\x12\r.InputMessage\x1a\x08.Successb\x06proto3'
 )
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
@@ -25,7 +25,9 @@ if _descriptor._USE_C_DESCRIPTORS is False:
     _SUCCESS._serialized_start = 90
     _SUCCESS._serialized_end = 129
     _MAPPROCESSINPUT._serialized_start = 131
-    _MAPPROCESSINPUT._serialized_end = 184
-    _REDUCEPROCESSINPUT._serialized_start = 186
-    _REDUCEPROCESSINPUT._serialized_end = 242
+    _MAPPROCESSINPUT._serialized_end = 217
+    _REDUCEPROCESSINPUT._serialized_start = 219
+    _REDUCEPROCESSINPUT._serialized_end = 308
+    _MASTERREGISTRY._serialized_start = 310
+    _MASTERREGISTRY._serialized_end = 362
 # @@protoc_insertion_point(module_scope)

@@ -1,9 +1,10 @@
 syntax = "proto3";
 
+/// The global message format for all messages
 message InputMessage {
-    /// Some field
+    /// key (if any) of the message
     optional string key = 1;
-    /// Some field
+    /// value (if any) of the message
     optional string value = 2;
 }
 
@@ -12,13 +13,22 @@ message Success {
     optional string value = 1;
 }
 
-/// Some service
+
 service MapProcessInput {
-    /// Some method
+    /// to receive file locations
     rpc Receive(InputMessage) returns (Success);
+    /// to receive info about what to do
+    rpc Info(InputMessage) returns (Success);
 }
 
 service ReduceProcessInput {
-    /// Some method
+    /// to receive intermediate file locations
+    rpc Receive(InputMessage) returns (Success);
+    /// to receive info about what to do
+    rpc Info(InputMessage) returns (Success);
+}
+
+service MasterRegistry {
+    /// works like a registry
     rpc Receive(InputMessage) returns (Success);
 }

@@ -1,0 +1,4 @@
+Name, Age, Role
+John, 21, CEO
+Tom, 17, Manager
+Tom, 34, Manager
