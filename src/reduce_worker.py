@@ -1,5 +1,4 @@
 import os
-import secrets
 from concurrent import futures
 
 import grpc
@@ -23,11 +22,9 @@ class ReduceProcessInput(messages_pb2_grpc.ReduceProcessInputServicer):
 class Reducer:
     def __init__(self, PORT, IP, n_map, output_dir):
         # create directory to store intermediate files
-        self.intermediate_dir = f"reduce_{secrets.token_urlsafe(8)}"
         self.node_name = None
         self.hashbucket = {}
-
-        os.mkdir(output_dir + "/" + self.intermediate_dir)
+        self.output_dir = output_dir
 
         port = str(PORT)
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
@@ -48,8 +45,9 @@ class Reducer:
     # will only be called when IF received from all mappers
     def reduce(self):
         """function to reduce the values that belong to the same key."""
-        for key in self.hashbucket:
-            print(key, sum(self.hashbucket[key]))
+        with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:
+            for key in self.hashbucket:
+                f.write(f"{key} {sum(self.hashbucket[key])}\n")
 
     def shufflesort(self, file):
         """function to sort the intermediate key-value pairs by key and
