@@ -11,7 +11,7 @@ python .\master.py --input samples/word_count/in --output lol --config samples/w
 ```
 or
 ```py
-python .\master.py --input samples/word_count/in --output lol --n_map 2 --n_reduce 10        
+python .\master.py --input samples/word_count/in --output ../reduce_intermediate --n_map 2 --n_reduce 10        
 ```
 
 # Testing
