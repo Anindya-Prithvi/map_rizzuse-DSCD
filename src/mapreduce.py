@@ -1,5 +1,4 @@
-import os
-
+import os,sys
 
 class WC:
     def parse_and_map(self, file):
@@ -111,3 +110,55 @@ class II:
                 if key not in self.hashbucket:
                     self.hashbucket[key] = set()
                 self.hashbucket[key].add(value)  
+
+class NJ:
+	def __init__(self, input_files):
+		self.input_files = input_files
+
+	def mapper(self, input_file):
+		rows = []
+		with open(input_file, "r") as f:
+			next(f) 
+			for line in f:
+				key, value = line.strip().split(",")
+				rows.append((key, input_file + "," + value))
+		return rows
+
+	def reducer(self, key, values):
+		final_ans = []
+		table1 = []
+		table2 = []
+
+		for value in values:
+			table, row = value.split(', ')
+			if(table=="input1.txt" or table=="input3.txt"):
+				table1.append(row)
+			else:
+				table2.append(row)
+
+		for t in table1:
+			for u in table2:
+				temp = [key,t,u]
+				final_ans.append(temp)
+
+		return final_ans
+
+	def run(self):
+		mapped_rows = []
+		for input_file in self.input_files:
+			mapped_rows.extend(self.mapper(input_file))
+
+		grouped_rows = {}
+		for row in mapped_rows:
+			key, value = row
+			if key in grouped_rows:
+				grouped_rows[key].append(value)
+			else:
+				grouped_rows[key] = [value]
+
+		with open('output.txt', 'w') as output_file:
+			for key, values in grouped_rows.items():
+				output = self.reducer(key, values)
+				if output:
+					for result in output:
+						output_file.write(", ".join(result) + "\n")
