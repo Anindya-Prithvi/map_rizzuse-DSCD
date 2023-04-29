@@ -121,9 +121,11 @@ class NJ:
         mapping_dict[headers[1]] = []
         for line in lines[1:]:
             header_val_1, header_val_2 = line.strip().split(", ")
+            #Making a list of form header -> rest : eg. Name -> [Name, file, Age value, "Age"]
             mapping_dict[headers[0]].append(list(header_val_1, file, header_val_2, headers[1]))
         for line in lines[1:]:
             header_val_1, header_val_2 = line.strip().split(", ")
+            #Making a list of form header -> rest : eg. Age -> [Age, file, Name value, "Name"]
             mapping_dict[headers[1]].append(list(header_val_2, file, header_val_1, headers[0]))
         self.partition(self, mapping_dict)
 
@@ -138,6 +140,8 @@ class NJ:
             # hash the key and mod it with n_reduce
             # write the key-value pair to the corresponding file
             self.file_handles[key_int % self.n_reduce][0].acquire()
+            # Writes in the form of "header -> rest" : eg. Name -> [Name, file, Age value, "Age"]
+            # Age -> [Age, file, Name value, "Name"]
             self.file_handles[key_int % self.n_reduce][1].write(f"{key} {mapping_dict[key]}\n")
             self.file_handles[key_int % self.n_reduce][0].release()
 
@@ -168,10 +172,12 @@ class NJ:
             return
         with open(file, "r") as f:
             for line in f:
+                # reading and converting it into a list
                 input_list = line.strip().split(" ")   
                 inner_list = eval(''.join(input_list[1:]))
                 output_list = [[name.strip("'"), table.strip("'"), age] for name, table, age in inner_list]
-                key = input_list[0]
+                key = input_list[0] # key is the header eg. Name -> list in parse_and_map
                 if key not in self.hashbucket:
                     self.hashbucket[key] = []
                 self.hashbucket[key].append(output_list)  # mostly 1 since no local reduce
+                #common column will have 2 lists in the list eg. [[Name, file, Age value, "Age"], [Name, file, Role value, "Role"]]
