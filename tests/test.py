@@ -64,14 +64,13 @@ class TestMaster(unittest.TestCase):
         input("Press enter to start natural join test.")
 
     def test04_nj(self):
-        print("not ready")
-        return
+        # print("not ready")
         logger.level("DEBUG")
         logger.debug("Testing master node setup.")
         master = Master(
             "src/samples/natural_join/in",
             "output_data_natural_join",
-            3,
+            2,
             2,
             "NJ",
             "map_intermediate_natural_join",

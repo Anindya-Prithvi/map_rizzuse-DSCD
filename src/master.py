@@ -245,12 +245,27 @@ class Master:
         consists of multiple data files and each file is
         processed by a separate mapper.
         """
-        input_files = os.listdir(self.input_data)  # no filtering
-        files_per_mapper = math.ceil(len(os.listdir(self.input_data)) / self.n_map)
-        self.partitions = [
-            input_files[i : i + files_per_mapper]
-            for i in range(0, len(input_files), files_per_mapper)
-        ]
+        if (self.objective == "NJ"):
+            input_files = os.listdir(self.input_data)  # no filtering
+            input_tables = []
+            for file_name in input_files:
+                input_number, table_name = file_name.split("_")
+                input_found = False
+                for i, input_list in enumerate(input_tables):
+                    if input_list[0].startswith(input_number):
+                        input_list.append(file_name)
+                        input_found = True
+                        break
+                if not input_found:
+                    input_tables.append([file_name])
+            self.partitions = input_tables
+        else:
+            input_files = os.listdir(self.input_data)  # no filtering
+            files_per_mapper = math.ceil(len(os.listdir(self.input_data)) / self.n_map)
+            self.partitions = [
+                input_files[i : i + files_per_mapper]
+                for i in range(0, len(input_files), files_per_mapper)
+            ]
 
 
 if __name__ == "__main__":
