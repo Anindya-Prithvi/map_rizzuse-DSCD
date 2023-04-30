@@ -1,6 +1,5 @@
 import json
 import os
-import random
 import secrets
 from concurrent import futures
 from threading import Lock
@@ -68,14 +67,13 @@ class Mapper:
         self.startlock = Lock()
         self.startlock.acquire()
         self.saver = {}
-        PORT = str(random.randint(52000, 65535))
 
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
         self.server = server
         messages_pb2_grpc.add_MapProcessInputServicer_to_server(
             MapProcessInput(self), server
         )
-        server.add_insecure_port(f"[::1]:{PORT}")  # no TLS moment
+        PORT = server.add_insecure_port("[::1]:0")  # no TLS moment
         server.start()
 
         # send message to master about liveliness

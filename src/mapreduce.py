@@ -197,11 +197,19 @@ class NJ:
                     third_name = temp_lis[0][0][3]
                 else:
                     second_name = temp_lis[0][0][3]
-            if first_name is not None and second_name is not None and third_name is not None:
+            if (
+                first_name is not None
+                and second_name is not None
+                and third_name is not None
+            ):
                 break
 
         lis = []
-        if first_name is not None and second_name is not None and third_name is not None:
+        if (
+            first_name is not None
+            and second_name is not None
+            and third_name is not None
+        ):
             lis.append(first_name)
             lis.append(second_name)
             lis.append(third_name)

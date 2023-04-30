@@ -1,5 +1,4 @@
 import json
-import random
 from concurrent import futures
 from threading import Lock
 
@@ -45,12 +44,11 @@ class Reducer:
         self.startlock = Lock()
         self.startlock.acquire()
 
-        PORT = str(random.randint(52000, 65535))
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
         messages_pb2_grpc.add_ReduceProcessInputServicer_to_server(
             ReduceProcessInput(self), server
         )
-        server.add_insecure_port(f"[::1]:{PORT}")  # no TLS moment
+        PORT = server.add_insecure_port("[::1]:0")  # no TLS moment
 
         # get port of server
         server.start()
