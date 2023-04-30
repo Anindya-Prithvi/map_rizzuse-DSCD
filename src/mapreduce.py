@@ -1,4 +1,5 @@
-import os,sys
+import os
+
 
 class WC:
     def parse_and_map(self, file):
@@ -109,25 +110,34 @@ class II:
                 key, value = line.strip().split(" ")
                 if key not in self.hashbucket:
                     self.hashbucket[key] = set()
-                self.hashbucket[key].add(value)  
+                self.hashbucket[key].add(value)
+
 
 class NJ:
     def parse_and_map(self, file):
         with open(file, "r") as f:
             lines = f.readlines()
-        headers = [lines[0].strip().split(", ")]
+        headers = lines[0].strip().split(", ")
         mapping_dict = {}
         mapping_dict[headers[0]] = []
         mapping_dict[headers[1]] = []
         for line in lines[1:]:
             header_val_1, header_val_2 = line.strip().split(", ")
-            #Making a list of form header -> rest : eg. Name -> [Name, file, Age value, "Age"]
-            mapping_dict[headers[0]].append(list(header_val_1, file, header_val_2, headers[1]))
+            # Making a list of form header -> rest : eg. Name -> [Name, file, Age value, "Age"]
+            mapping_dict[headers[0]].append(
+                list((header_val_1, file, header_val_2, headers[1]))
+            )
         for line in lines[1:]:
             header_val_1, header_val_2 = line.strip().split(", ")
-            #Making a list of form header -> rest : eg. Age -> [Age, file, Name value, "Name"]
-            mapping_dict[headers[1]].append(list(header_val_2, file, header_val_1, headers[0]))
+            # Making a list of form header -> rest : eg. Age -> [Age, file, Name value, "Name"]
+            mapping_dict[headers[1]].append(
+                list((header_val_2, file, header_val_1, headers[0]))
+            )
+
         self.partition(self, mapping_dict)
+
+    def map(**args):
+        return None
 
     def partition(self, mapping_dict):
         from hashlib import md5
@@ -142,7 +152,9 @@ class NJ:
             self.file_handles[key_int % self.n_reduce][0].acquire()
             # Writes in the form of "header -> rest" : eg. Name -> [Name, file, Age value, "Age"]
             # Age -> [Age, file, Name value, "Name"]
-            self.file_handles[key_int % self.n_reduce][1].write(f"{key} {mapping_dict[key]}\n")
+            self.file_handles[key_int % self.n_reduce][1].write(
+                f"{key} {mapping_dict[key]}\n"
+            )
             self.file_handles[key_int % self.n_reduce][0].release()
 
     def parse_map_loc(self, map_loc):
@@ -154,15 +166,19 @@ class NJ:
     # will only be called when IF received from all mappers
     def reduce(self):
         """function to reduce the values that belong to the same key."""
-        with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:            
+        with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:
             for key in self.hashbucket:
-                f.write(f"{key} {self.hashbucket[key][0][3]} {self.hashbucket[key][1][3]}\n")
-                if (len(self.hashbucket[key]) == 2):
+                print("SAMEX", self.hashbucket[key][0][0])
+                f.write(
+                    f"{key} {self.hashbucket[key][0][0][3]} {self.hashbucket[key][0][0][3]}\n"
+                )
+                print("stupoid")
+                if len(self.hashbucket[key]) == 2:
                     for i in self.hashbucket[key][0]:
                         for j in self.hashbucket[key][1]:
-                            if (i[0] == j[0] and i[1] != j[1] and i[3] != j[3]):
+                            if i[0] == j[0] and i[1] != j[1] and i[3] != j[3]:
                                 f.write(f"{i[0]} {i[2]} {j[2]}\n")
-                                
+
     def shufflesort(self, file):
         """function to sort the intermediate key-value pairs by key and
         group the values that belong to the same key.
@@ -173,11 +189,21 @@ class NJ:
         with open(file, "r") as f:
             for line in f:
                 # reading and converting it into a list
-                input_list = line.strip().split(" ")   
-                inner_list = eval(''.join(input_list[1:]))
-                output_list = [[name.strip("'"), table.strip("'"), age] for name, table, age in inner_list]
-                key = input_list[0] # key is the header eg. Name -> list in parse_and_map
+                input_list = line.strip().split(" ")
+                # print(input_list, "SUGGONDEnuefeifjZ")
+                inner_list = eval("".join(input_list[1:]))
+                # print(inner_list, "RETARDA", inner_list[0])
+                output_list = [
+                    [name.strip(), table.strip(), age, agelabel]
+                    for name, table, age, agelabel in inner_list
+                ]
+                # print("COULDNT OUTPUT", output_list)
+                key = input_list[
+                    0
+                ]  # key is the header eg. Name -> list in parse_and_map
                 if key not in self.hashbucket:
                     self.hashbucket[key] = []
-                self.hashbucket[key].append(output_list)  # mostly 1 since no local reduce
-                #common column will have 2 lists in the list eg. [[Name, file, Age value, "Age"], [Name, file, Role value, "Role"]]
+                self.hashbucket[key].append(
+                    output_list
+                )  # mostly 1 since no local reduce
+                # common column will have 2 lists in the list eg. [[Name, file, Age value, "Age"], [Name, file, Role value, "Role"]]

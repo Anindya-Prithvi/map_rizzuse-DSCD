@@ -64,5 +64,3 @@ class Reducer:
 
         # logger.debug(f"{self.intermediate_dir} started on {IP}:{port}")
         server.wait_for_termination()
-
-

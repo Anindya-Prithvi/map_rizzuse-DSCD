@@ -245,7 +245,7 @@ class Master:
         consists of multiple data files and each file is
         processed by a separate mapper.
         """
-        if (self.objective == "NJ"):
+        if self.objective == "NJ":
             input_files = os.listdir(self.input_data)  # no filtering
             input_tables = []
             for file_name in input_files:
