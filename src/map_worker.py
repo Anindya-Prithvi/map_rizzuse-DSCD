@@ -68,7 +68,7 @@ class Mapper:
         self.startlock = Lock()
         self.startlock.acquire()
         self.saver = {}
-        PORT = str(random.randint(62000, 65535))
+        PORT = str(random.randint(52000, 65535))
 
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
         self.server = server

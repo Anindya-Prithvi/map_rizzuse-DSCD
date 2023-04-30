@@ -45,7 +45,7 @@ class Reducer:
         self.startlock = Lock()
         self.startlock.acquire()
 
-        PORT = str(random.randint(62000, 65535))
+        PORT = str(random.randint(52000, 65535))
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
         messages_pb2_grpc.add_ReduceProcessInputServicer_to_server(
             ReduceProcessInput(self), server
