@@ -126,7 +126,6 @@ class NJ:
 			if header_val_1 not in self.saver:
 				self.saver[header_val_1] = []
 			self.saver[header_val_1].append([common_header, header_val_2, file_name, headers[1]])
-		print("saver", self.saver)
 		self.partition(self, self.saver)
 		
 	def map(**args):
@@ -179,13 +178,36 @@ class NJ:
 
 			return final_ans
 		
+		first_name = None
+		second_name = None
+		third_name = None
+		for x in self.hashbucket:
+			temp_lis = self.hashbucket[x]
+			if len(temp_lis):
+				first_name = temp_lis[0][0][0]
+				if(temp_lis[0][0][2]=='input1_table2.txt' or temp_lis[0][0][2]=='input2_table2.txt'):
+					third_name = temp_lis[0][0][3]
+				else:
+					second_name = temp_lis[0][0][3]
+			if first_name != None and second_name != None and third_name != None:
+				break
+
+		lis = []
+		if first_name != None and second_name != None and third_name != None:
+			lis.append(first_name)
+			lis.append(second_name)
+			lis.append(third_name)
+
 		with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:
-			for x in self.hashbucket:
-				final_res = joinn(x,self.hashbucket[x])
-				for var in final_res:
-						if len(var):
-							f.write(", ".join(var))
-						f.write('\n')
+			if(len(lis)==3):
+				f.write(", ".join(lis))
+				f.write('\n')
+				for x in self.hashbucket:
+					final_res = joinn(x,self.hashbucket[x])
+					for var in final_res:
+							if len(var):
+								f.write(", ".join(var))
+							f.write('\n')
 
 		self.reduce(self)
 

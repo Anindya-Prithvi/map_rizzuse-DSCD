@@ -1,6 +1,5 @@
 Name, Age
-John, 21
-Tom, 17
-Smith, 23
-Kevin, 100
-Elon, 33
+Ritwick, 21
+Anindya, 63
+Shivansh, 25
+Shivansh, 36
