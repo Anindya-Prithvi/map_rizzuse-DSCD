@@ -83,7 +83,7 @@ class II:
             # hash the key and mod it with n_reduce
             # write the key-value pair to the corresponding file
             self.file_handles[key_int % self.n_reduce][0].acquire()
-            self.file_handles[key_int % self.n_reduce][1].write(f"{key} {value}\n")
+            self.file_handles[key_int % self.n_reduce][1].write(f"{key}\t{value}\n")
             self.file_handles[key_int % self.n_reduce][0].release()
 
     def parse_map_loc(self, map_loc):
@@ -107,7 +107,7 @@ class II:
             return
         with open(file, "r") as f:
             for line in f:
-                key, value = line.strip().split(" ")
+                key, value = line.strip().split("\t")
                 if key not in self.hashbucket:
                     self.hashbucket[key] = set()
                 self.hashbucket[key].add(value)
