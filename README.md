@@ -13,6 +13,10 @@ or
 ```py
 python .\master.py --input samples/word_count/in --output ../reduce_intermediate --n_map 2 --n_reduce 10        
 ```
+or
+```py
+python -m unittest -v
+```
 
 # Testing
 To test the project, run `python -m unittest` in the root directory. This will run all the tests in the `tests` directory.
