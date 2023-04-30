@@ -1,4 +1,4 @@
 Name, Role
-Smith, CEO
-Elon, Manager
-Kevin, Intern
+Shivansh, CEO
+Shivansh, Manager
+Shivansh, Intern
