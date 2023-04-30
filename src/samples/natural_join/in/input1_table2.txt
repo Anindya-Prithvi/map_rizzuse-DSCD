@@ -1,4 +1,4 @@
 Name, Role
-John, CEO
-Tom, Manager
+Smith, CEO
+Elon, Manager
 Kevin, Intern
