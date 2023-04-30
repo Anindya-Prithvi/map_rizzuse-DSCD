@@ -1,6 +1,5 @@
 import os
 
-
 class WC:
     def parse_and_map(self, file):
         """Prepares input for map function"""
@@ -19,7 +18,7 @@ class WC:
         from hashlib import md5
 
         hash = md5
-        # will generate n_reduce intermediate files
+        # will generate n_reduce intermediate file_system
 
         for key, value in l_k_v:
             key_int = int(hash(key.encode()).hexdigest(), 16)
@@ -30,7 +29,7 @@ class WC:
             self.file_handles[key_int % self.n_reduce][0].release()
 
     def parse_map_loc(self, map_loc):
-        """This function will read all assigned intermediate files of the mapper"""
+        """This function will read all assigned intermediate file_system of the mapper"""
         for file in os.listdir(map_loc):
             self.shufflesort(self, os.path.join(map_loc, file, self.node_name))
         self.reduce(self)
@@ -76,7 +75,7 @@ class II:
         from hashlib import md5
 
         hash = md5
-        # will generate n_reduce intermediate files
+        # will generate n_reduce intermediate file_system
 
         for key, value in l_k_v:
             key_int = int(hash(key.encode()).hexdigest(), 16)
@@ -87,7 +86,7 @@ class II:
             self.file_handles[key_int % self.n_reduce][0].release()
 
     def parse_map_loc(self, map_loc):
-        """This function will read all assigned intermediate files of the mapper"""
+        """This function will read all assigned intermediate file_system of the mapper"""
         for file in os.listdir(map_loc):
             self.shufflesort(self, os.path.join(map_loc, file, self.node_name))
         self.reduce(self)
@@ -118,24 +117,18 @@ class NJ:
         with open(file, "r") as f:
             lines = f.readlines()
         headers = lines[0].strip().split(", ")
-        mapping_dict = {}
-        mapping_dict[headers[0]] = []
-        mapping_dict[headers[1]] = []
+        common_header = headers[0]
+        # print("file", file)
+        dir_name, file_name = os.path.split(file)
+        # file_name = file_name.split("_")[0]
         for line in lines[1:]:
             header_val_1, header_val_2 = line.strip().split(", ")
-            # Making a list of form header -> rest : eg. Name -> [Name, file, Age value, "Age"]
-            mapping_dict[headers[0]].append(
-                list((header_val_1, file, header_val_2, headers[1]))
-            )
-        for line in lines[1:]:
-            header_val_1, header_val_2 = line.strip().split(", ")
-            # Making a list of form header -> rest : eg. Age -> [Age, file, Name value, "Name"]
-            mapping_dict[headers[1]].append(
-                list((header_val_2, file, header_val_1, headers[0]))
-            )
-
-        self.partition(self, mapping_dict)
-
+            if header_val_1 not in self.saver:
+                self.saver[header_val_1] = []
+            self.saver[header_val_1].append([common_header, header_val_2, file_name, headers[1]])
+        print("saver", self.saver)
+        self.partition(self, self.saver)
+       
     def map(**args):
         return None
 
@@ -143,8 +136,7 @@ class NJ:
         from hashlib import md5
 
         hash = md5
-        # will generate n_reduce intermediate files
-
+        # will generate n_reduce intermediate file_system
         for key in mapping_dict:
             key_int = int(hash(key.encode()).hexdigest(), 16)
             # hash the key and mod it with n_reduce
@@ -158,21 +150,24 @@ class NJ:
             self.file_handles[key_int % self.n_reduce][0].release()
 
     def parse_map_loc(self, map_loc):
-        """This function will read all assigned intermediate files of the mapper"""
+        """This function will read all assigned intermediate file_system of the mapper"""
+        # print("Location", map_loc, "Node", self.node_name)
         for file in os.listdir(map_loc):
             self.shufflesort(self, os.path.join(map_loc, file, self.node_name))
+        # print("Check", self.hashbucket)
         self.reduce(self)
 
     # will only be called when IF received from all mappers
     def reduce(self):
         """function to reduce the values that belong to the same key."""
+        # print(self.hashbucket)
         with open(f"{self.output_dir}/Output{self.node_name}.txt", "w") as f:
             for key in self.hashbucket:
-                print("SAMEX", self.hashbucket[key][0][0])
+                # print("SAMEX", self.hashbucket[key])
                 f.write(
                     f"{key} {self.hashbucket[key][0][0][3]} {self.hashbucket[key][0][0][3]}\n"
                 )
-                print("stupoid")
+                # print("stupoid")
                 if len(self.hashbucket[key]) == 2:
                     for i in self.hashbucket[key][0]:
                         for j in self.hashbucket[key][1]:
@@ -187,6 +182,7 @@ class NJ:
         if not os.path.isfile(file):
             return
         with open(file, "r") as f:
+            # print("FILE", file, "NODE", self.node_name)
             for line in f:
                 # reading and converting it into a list
                 input_list = line.strip().split(" ")
@@ -201,9 +197,33 @@ class NJ:
                 key = input_list[
                     0
                 ]  # key is the header eg. Name -> list in parse_and_map
+                # print("KEY", key)
                 if key not in self.hashbucket:
                     self.hashbucket[key] = []
                 self.hashbucket[key].append(
                     output_list
                 )  # mostly 1 since no local reduce
+                # print("HASHBUCKET", self.hashbucket, "NODE", self.node_name)
                 # common column will have 2 lists in the list eg. [[Name, file, Age value, "Age"], [Name, file, Role value, "Role"]]
+
+
+
+
+
+# mapping_dict = {}
+        # mapping_dict[headers[0]] = []
+        # mapping_dict[headers[1]] = []
+        # for line in lines[1:]:
+        #     header_val_1, header_val_2 = line.strip().split(", ")
+        #     # Making a list of form header -> rest : eg. Name -> [Name, file, Age value, "Age"]
+        #     mapping_dict[headers[0]].append(
+        #         list((header_val_1, file, header_val_2, headers[1]))
+        #     )
+        # for line in lines[1:]:
+        #     header_val_1, header_val_2 = line.strip().split(", ")
+        #     # Making a list of form header -> rest : eg. Age -> [Age, file, Name value, "Name"]
+        #     mapping_dict[headers[1]].append(
+        #         list((header_val_2, file, header_val_1, headers[0]))
+        #     )
+        # print("Node")
+        # self.partition(self, mapping_dict)
